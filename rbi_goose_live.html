@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RBI + Goose Board — Live Projections</title>
+<style>
+  :root {
+    --bg:#0B0B10; --card:#13131C; --line:#232332;
+    --purple:#8B7CF6; --teal:#2DD4BF; --amber:#F5A623;
+    --dim:#6B6B80; --text:#E8E8F0;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:16px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .brand { color:var(--purple); font-weight:800; font-size:20px; letter-spacing:1px; }
+  .sub { color:var(--dim); font-size:12px; margin-left:10px; }
+  .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0 14px; }
+  input, button { font-size:13px; border-radius:8px; }
+  input { background:var(--card); color:var(--text); border:1px solid var(--line); padding:7px 10px; }
+  input[type=number] { width:64px; }
+  label { color:var(--dim); font-size:12px; }
+  button { background:var(--purple); color:#0B0B10; font-weight:700; border:none;
+    padding:8px 16px; cursor:pointer; }
+  button:disabled { opacity:.5; }
+  .status { color:var(--teal); font-size:13px; margin-bottom:10px; min-height:16px; }
+  .error { color:var(--amber); }
+  .meta { color:var(--dim); font-size:12px; margin-bottom:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .sect { background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:14px; }
+  .sect.goose { border-color:var(--amber); }
+  .stitle { font-weight:800; font-size:12px; letter-spacing:1px; margin-bottom:6px; }
+  .stitle.rbi { color:var(--teal); }
+  .stitle.goose { color:var(--amber); }
+  .row { display:flex; align-items:center; gap:8px; padding:5px 0;
+    font-family:ui-monospace,Menlo,monospace; font-size:11.5px;
+    border-top:1px solid var(--line); flex-wrap:wrap; }
+  .row:first-of-type { border-top:none; }
+  .nm { color:var(--text); font-weight:600; flex:1; min-width:120px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mu { color:var(--dim); }
+  .val { white-space:nowrap; }
+  .hot { color:var(--teal); } .mid { color:var(--purple); } .low { color:var(--dim); }
+  .gval { color:var(--amber); font-weight:700; white-space:nowrap; }
+  .note { color:var(--dim); font-size:11px; margin-top:6px; line-height:1.4; }
+  .lu { display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px;
+    font-weight:800; letter-spacing:.5px; }
+  .lu-conf { background:rgba(45,212,191,.15); color:var(--teal); }
+  .lu-proj { background:rgba(139,124,246,.15); color:var(--purple); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <span class="brand">RBI + GOOSE BOARD</span>
+    <span class="sub">live projections · MLB Stats API</span>
+  </div>
+  <div class="controls">
+    <input type="date" id="date" />
+    <label>season wt <input type="number" id="wt" step="0.05" min="0" max="1" value="0.70" />
+      <span id="wtinfo" style="color:var(--teal);cursor:pointer;font-weight:700">ⓘ</span></label>
+    <button id="run">Run slate</button>
+  </div>
+  <div id="wtnote" style="display:none; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px;
+    color:var(--dim); line-height:1.5">
+    <b style="color:var(--text)">Season wt</b> — how much the model weighs a player's
+    <b style="color:var(--text)">full-season rates</b> (RBI/G, HR/G, SB/G) vs his
+    <b style="color:var(--text)">last-30-days rates</b>:
+    <span style="font-family:ui-monospace,Menlo,monospace">rate used = wt × season + (1−wt) × last-30</span><br>
+    <b style="color:var(--teal)">0.70 (default)</b> — season leads, recent form nudges. The sane setting.<br>
+    <b style="color:var(--amber)">Lower (0.50–0.60)</b> — trusts recent form more (hot bat, lineup promotion, green-light stretch).<br>
+    <b style="color:var(--purple)">Higher (0.85–1.0)</b> — nearly ignores last-30 (1.0 = pure season). Use early season or when a small sample is skewing L30.<br>
+    Applies to all players — change it and hit Run slate to re-project.
+  </div>
+  <div class="status" id="status"></div>
+  <div class="meta" id="meta"></div>
+  <div id="boards"></div>
+</div>
+
+<script>
+const API = "https://statsapi.mlb.com/api/v1";
+// approx park factors (100 = neutral), keyed by home team id
+const PARK_RUN = {115:112,111:104,141:102,140:103,109:104,113:103,116:102,
+  117:101,133:99,108:99,110:101,112:101,114:100,118:102,119:99,120:100,
+  121:97,134:99,135:96,136:95,137:96,138:100,139:98,142:101,143:101,
+  144:100,145:101,146:97,147:101,158:102};
+const PARK_HR = {115:104,111:96,141:102,140:105,109:108,113:106,116:100,
+  117:105,133:96,108:98,110:104,112:100,114:102,118:95,119:102,120:100,
+  121:98,134:95,135:97,136:100,137:92,138:98,139:96,142:101,143:104,
+  144:102,145:106,146:94,147:105,158:104};
+const LG = { RA9: 4.5, HR9: 1.15, SB9: 0.70 };
+
+const $ = (id) => document.getElementById(id);
+const TEAM_ABBR = {};
+
+function ipToInnings(ip) {
+  if (ip == null) return 0;
+  const s = String(ip); const parts = s.split(".");
+  return Number(parts[0]) + (Number(parts[1] ?? 0)) / 3;
+}
+function fairOdds(p) {
+  if (p<=0.0005) return "+99900";
+  if (p>=0.9995) return "-99900";
+  return p>=0.5 ? "-"+Math.round(100*p/(1-p)) : "+"+Math.round(100*(1-p)/p);
+}
+function pPois1(l) { return 1 - Math.exp(-l); }
+function pPois2(l) { return 1 - Math.exp(-l) - l*Math.exp(-l); }
+function cls(p, hi, mid) { return p>=hi ? "hot" : p>=mid ? "mid" : "low"; }
+async function j(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status + " on " + url.slice(0,60));
+  return r.json();
+}
+function blend(season, l30, wt) {
+  return (l30 == null || isNaN(l30)) ? season : wt*season + (1-wt)*l30;
+}
+
+async function fetchSlate(dateStr, wt, setStatus) {
+  const season = dateStr.slice(0,4);
+  setStatus("Loading schedule + probables + lineups…");
+  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher,lineups`);
+  const games = (sched.dates?.[0]?.games) ?? [];
+  if (!games.length) throw new Error("No games on this date.");
+
+  if (!Object.keys(TEAM_ABBR).length) {
+    const tms = await j(`${API}/teams?sportId=1&season=${season}`);
+    for (const t of (tms.teams ?? [])) TEAM_ABBR[t.id] = t.abbreviation ?? t.name;
+  }
+  const abbr = (t) => TEAM_ABBR[t?.id] ?? t?.name ?? "?";
+
+  const end = new Date(dateStr+"T12:00:00");
+  const start = new Date(end); start.setDate(start.getDate()-30);
+  const startStr = start.toISOString().slice(0,10);
+
+  // opposing starter pitching profiles
+  setStatus("Loading opposing starters…");
+  const spCache = {};
+  async function spProfile(pid) {
+    if (spCache[pid]) return spCache[pid];
+    try {
+      const p = await j(`${API}/people/${pid}?hydrate=stats(group=[pitching],type=[season],season=${season})`);
+      const st = p.people?.[0]?.stats?.find(s=>s.type?.displayName==="season")?.splits?.[0]?.stat;
+      const inn = ipToInnings(st?.inningsPitched);
+      spCache[pid] = inn >= 15 ? {
+        ra9: 9*Number(st.runs ?? 0)/inn,
+        hr9: 9*Number(st.homeRuns ?? 0)/inn,
+        sb9: 9*Number(st.stolenBases ?? 0)/inn,
+      } : null;
+    } catch { spCache[pid] = null; }
+    return spCache[pid];
+  }
+
+  const rbi = [], goose = [];
+  let done = 0, lineupConfirmed = 0;
+
+  for (const g of games) {
+    for (const side of ["away","home"]) {
+      const team = g.teams[side].team;
+      const oppSide = side==="away" ? "home" : "away";
+      const oppTeam = g.teams[oppSide].team;
+      const oppSP = g.teams[oppSide].probablePitcher;
+      const sp = oppSP ? await spProfile(oppSP.id) : null;
+      const parkRun = (PARK_RUN[g.teams.home.team.id] ?? 100)/100;
+      const parkHR = (PARK_HR[g.teams.home.team.id] ?? 100)/100;
+      // partial-game weighting: starter faces ~60% of the lineup's PAs
+      const runMult = (sp ? 0.6*Math.min(1.4,Math.max(0.6,sp.ra9/LG.RA9))+0.4 : 1) * parkRun;
+      const hrMult  = (sp ? 0.6*Math.min(1.5,Math.max(0.5,sp.hr9/LG.HR9))+0.4 : 1) * parkHR;
+      const sbMult  = (sp ? 0.6*Math.min(1.6,Math.max(0.5,sp.sb9/LG.SB9))+0.4 : 1);
+
+      // confirmed lineup ids if posted
+      const luKey = side + "Players";
+      const lineupIds = new Set((g.lineups?.[luKey] ?? []).map(p => p.id));
+      if (lineupIds.size >= 8) lineupConfirmed++;
+
+      let roster;
+      try {
+        roster = await j(`${API}/teams/${team.id}/roster?rosterType=active&season=${season}&hydrate=person(stats(group=[hitting],type=[season,byDateRange],startDate=${startStr},endDate=${dateStr},season=${season}))`);
+      } catch { continue; }
+
+      for (const r of (roster.roster ?? [])) {
+        const person = r.person;
+        if (!person?.stats) continue;
+        let se=null, l30=null;
+        for (const grp of person.stats) {
+          const t = grp.type?.displayName;
+          const st = grp.splits?.[0]?.stat;
+          if (t==="season") se = st;
+          if (t==="byDateRange") l30 = st;
+        }
+        if (!se) continue;
+        const gms = Number(se.gamesPlayed ?? 0);
+        if (gms < 15) continue;
+        const inLineup = lineupIds.size >= 8 ? lineupIds.has(person.id) : null;
+        if (inLineup === false) continue;
+        if (inLineup === null && Number(se.plateAppearances ?? 0)/gms < 2.6) continue; // regulars only
+
+        const g30 = Number(l30?.gamesPlayed ?? 0);
+        const seRbi = Number(se.rbi ?? 0)/gms, l30Rbi = g30>=8 ? Number(l30.rbi ?? 0)/g30 : null;
+        const seHr  = Number(se.homeRuns ?? 0)/gms, l30Hr = g30>=8 ? Number(l30.homeRuns ?? 0)/g30 : null;
+        const seSb  = Number(se.stolenBases ?? 0)/gms, l30Sb = g30>=8 ? Number(l30.stolenBases ?? 0)/g30 : null;
+        const rbiRate = blend(seRbi, l30Rbi, wt);
+        const hrRate  = blend(seHr, l30Hr, wt);
+        const sbRate  = blend(seSb, l30Sb, wt);
+
+        // confidence factors: lineup status, sample size, season vs L30 agreement
+        const agree = (a, b) => (b == null || a === 0 || b === 0)
+          ? 0.90 : 0.85 + 0.15 * (Math.min(a,b)/Math.max(a,b));
+        const luF = (inLineup === true) ? 1.0 : 0.95;
+        const sampF = gms >= 40 ? 1.0 : 0.90;
+
+        const base = {
+          name: person.fullName, teamAbbr: abbr(team), oppAbbr: abbr(oppTeam),
+          oppSP: oppSP?.fullName ?? "TBD", confirmed: inLineup === true,
+        };
+        // RBI
+        const lRbi = rbiRate * runMult;
+        const p1 = pPois1(lRbi), p2 = pPois2(lRbi);
+        rbi.push({ ...base, lam: lRbi, p1, p2,
+          conf: p1 * luF * sampF * agree(seRbi, l30Rbi) });
+        // GOOSE — needs both tools
+        if (hrRate >= 0.06 && sbRate >= 0.06) {
+          const lHr = hrRate * hrMult, lSb = sbRate * sbMult;
+          const pHr = pPois1(lHr), pSb = pPois1(lSb);
+          const pg = pHr*pSb;
+          goose.push({ ...base, hrRate, sbRate, pHr, pSb, pg,
+            conf: pg * luF * sampF * Math.min(agree(seHr, l30Hr), agree(seSb, l30Sb)) });
+        }
+      }
+    }
+    done++;
+    setStatus(`Processed ${done}/${games.length} games…`);
+  }
+
+  rbi.sort((a,b)=>b.conf-a.conf);
+  goose.sort((a,b)=>b.conf-a.conf);
+  return { rbi: rbi.slice(0,30), goose: goose.slice(0,15),
+    nGames: games.length, lineupConfirmed, nTeams: games.length*2 };
+}
+
+function render(data) {
+  $("meta").textContent =
+    `${data.nGames} games · lineups confirmed for ${data.lineupConfirmed}/${data.nTeams} teams (others use regulars)`;
+  const b = $("boards");
+  const luTag = (r) => r.confirmed
+    ? `<span class="lu lu-conf">IN LINEUP</span>` : `<span class="lu lu-proj">EXPECTED</span>`;
+  const tier = (score, hi, mid) => score >= hi
+    ? `<span class="lu lu-conf">HIGH</span>` : score >= mid
+    ? `<span class="lu" style="background:rgba(245,166,35,.15);color:var(--amber)">MED</span>`
+    : `<span class="lu" style="background:rgba(107,107,128,.2);color:var(--dim)">LOW</span>`;
+
+  const rbiRows = data.rbi.map(r =>
+    `<div class="row">
+      <span class="nm">${tier(r.conf,.58,.46)} ${r.name} ${luTag(r)}</span>
+      <span class="mu">${r.teamAbbr} v ${r.oppAbbr} · ${r.oppSP.split(" ").slice(-1)[0]}</span>
+      <span class="val ${cls(r.p1,.62,.5)}">1+ ${(r.p1*100).toFixed(0)}% ${fairOdds(r.p1)}</span>
+      <span class="val ${cls(r.p2,.3,.2)}">2+ ${(r.p2*100).toFixed(0)}% ${fairOdds(r.p2)}</span>
+    </div>`).join("");
+
+  const gooseRows = data.goose.map(r =>
+    `<div class="row">
+      <span class="nm">${tier(r.conf,.042,.028)} ${r.name} ${luTag(r)}</span>
+      <span class="mu">${r.teamAbbr} v ${r.oppAbbr}</span>
+      <span class="val mid">HR ${(r.pHr*100).toFixed(0)}% · SB ${(r.pSb*100).toFixed(0)}%</span>
+      <span class="gval">🪿 ${(r.pg*100).toFixed(1)}% ${fairOdds(r.pg)}</span>
+    </div>`).join("");
+
+  b.innerHTML =
+    `<div class="sect"><div class="stitle rbi">RBI BOARD — 1+ / 2+</div>${rbiRows}
+      <div class="note">Sorted by CONFIDENCE = probability adjusted for lineup status (confirmed > expected),
+      sample size (40+ games > fewer), and season/last-30 agreement (steady rate > hot streak or slump).
+      λ = blended RBI/G × opp-SP run factor × park. Poisson → P(1+), P(2+), fair odds.
+      IN LINEUP = confirmed in today's posted lineup · EXPECTED = projected regular (≥2.6 PA/G), lineup not posted yet — verify before betting.</div></div>
+    <div class="sect goose"><div class="stitle goose">GOOSE BOARD — HR + SB same game</div>
+      ${gooseRows || '<div class="note">No qualified power/speed candidates on this slate (needs ≥0.06 HR/G and SB/G).</div>'}
+      <div class="note">Sorted by CONFIDENCE (probability × lineup status × sample × season/L30 agreement on BOTH the HR and SB rate —
+      a player whose power or speed is streaky ranks below one steady in both).
+      P(goose) = P(HR 1+) × P(SB 1+), treated independent. HR adj: opp-SP HR/9 + park HR factor.
+      SB adj: opp-SP SB allowed per 9. Only players with both tools qualify. Books rarely price this combo —
+      compare vs same-game HR + SB parlay legs where offered.</div></div>`;
+}
+
+async function run() {
+  const btn = $("run");
+  btn.disabled = true; btn.textContent = "Running…";
+  $("status").classList.remove("error");
+  $("boards").innerHTML = ""; $("meta").textContent = "";
+  try {
+    const data = await fetchSlate($("date").value, Number($("wt").value),
+      (m) => { $("status").textContent = m; });
+    $("status").textContent = "";
+    render(data);
+  } catch (e) {
+    $("status").textContent = "Error: " + e.message;
+    $("status").classList.add("error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Run slate";
+  }
+}
+
+$("date").value = new Date().toISOString().slice(0,10);
+$("run").addEventListener("click", run);
+$("wtinfo").addEventListener("click", () => {
+  const n = $("wtnote");
+  n.style.display = n.style.display === "none" ? "block" : "none";
+});
+run();
+</script>
+</body>
+</html>

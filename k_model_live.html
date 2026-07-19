@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>K Model — Live Strikeout Projections</title>
+<style>
+  :root {
+    --bg:#0B0B10; --card:#13131C; --line:#232332;
+    --purple:#8B7CF6; --teal:#2DD4BF; --amber:#F5A623;
+    --dim:#6B6B80; --text:#E8E8F0;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:16px; }
+  .wrap { max-width:760px; margin:0 auto; }
+  .brand { color:var(--purple); font-weight:800; font-size:20px; letter-spacing:1px; }
+  .sub { color:var(--dim); font-size:12px; margin-left:10px; }
+  .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0 14px; }
+  input, button { font-size:13px; border-radius:8px; }
+  input { background:var(--card); color:var(--text); border:1px solid var(--line); padding:7px 10px; }
+  input[type=number] { width:64px; }
+  label { color:var(--dim); font-size:12px; }
+  button { background:var(--purple); color:#0B0B10; font-weight:700; border:none;
+    padding:8px 16px; cursor:pointer; }
+  button:disabled { opacity:.5; }
+  .status { color:var(--teal); font-size:13px; margin-bottom:10px; min-height:16px; }
+  .error { color:var(--amber); }
+  .meta { color:var(--dim); font-size:12px; margin-bottom:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:14px; margin-bottom:12px; }
+  .card.compact { padding:10px 12px; margin-bottom:8px; cursor:pointer; }
+  .chips { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:6px;
+    font-family:ui-monospace,Menlo,monospace; font-size:11.5px; }
+  .chip { white-space:nowrap; }
+  .scsum { color:var(--text); font-size:11px; margin-top:5px;
+    font-family:ui-monospace,Menlo,monospace; }
+  .detail { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+  .t5 { background:var(--card); border:1px solid var(--purple); border-radius:10px;
+    padding:10px 12px; margin-bottom:14px; }
+  .t5 .t5title { color:var(--purple); font-weight:800; font-size:12px;
+    letter-spacing:1px; margin-bottom:6px; }
+  .t5row { display:flex; align-items:center; gap:8px; padding:4px 0;
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; cursor:pointer;
+    border-top:1px solid var(--line); }
+  .t5row:first-of-type { border-top:none; }
+  .t5row .rk { color:var(--amber); font-weight:800; width:14px; }
+  .t5row .nm { color:var(--text); font-weight:600; flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .t5row .mu { color:var(--dim); }
+  .t5row .k { color:var(--amber); font-weight:700; }
+  .t5row .r7 { width:86px; text-align:right; }
+  .card.skip { opacity:.5; }
+  .head { display:flex; justify-content:space-between; align-items:baseline;
+    flex-wrap:wrap; gap:4px; }
+  .pname { font-weight:700; font-size:15px; }
+  .ptag { color:var(--dim); font-size:12px; margin-left:8px; }
+  .expk { color:var(--amber); font-weight:700; font-size:18px;
+    font-family:ui-monospace,Menlo,monospace; }
+  .adj { color:var(--dim); font-size:13px; margin-left:8px;
+    font-family:ui-monospace,Menlo,monospace; }
+  .rates { color:var(--dim); font-size:11px; margin:4px 0 8px;
+    font-family:ui-monospace,Menlo,monospace; }
+  .rung { display:flex; align-items:center; gap:8px; font-size:12px; margin-top:4px; }
+  .rung .lbl { color:var(--dim); width:24px; font-family:ui-monospace,Menlo,monospace; }
+  .bar { flex:1; height:6px; background:#1C1C28; border-radius:3px; overflow:hidden; }
+  .fill { height:6px; border-radius:3px; transition:width .4s; }
+  .pct { width:44px; text-align:right; font-family:ui-monospace,Menlo,monospace; }
+  .fair { width:56px; text-align:right; font-family:ui-monospace,Menlo,monospace; }
+  .scbtn { background:transparent; color:var(--teal); border:1px solid var(--line);
+    padding:5px 12px; font-size:11px; font-weight:700; margin-top:10px;
+    letter-spacing:.5px; }
+  .scpanel { margin-top:10px; padding-top:10px; border-top:1px solid var(--line);
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+  .verdict { display:inline-block; padding:2px 8px; border-radius:4px;
+    font-weight:800; font-size:11px; letter-spacing:.5px; }
+  .v-confirm { background:rgba(45,212,191,.15); color:var(--teal); }
+  .v-neutral { background:rgba(245,166,35,.15); color:var(--amber); }
+  .v-flag { background:rgba(255,107,107,.15); color:#FF6B6B; }
+  .scrow { display:flex; justify-content:space-between; margin-top:4px; color:var(--text); }
+  .scrow .k { color:var(--dim); }
+  .pmix { margin-top:6px; color:var(--dim); }
+  .pmix b { color:var(--text); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <span class="brand">K MODEL</span>
+    <span class="sub">live projections · odds-ratio × MC · MLB Stats API</span>
+  </div>
+  <div class="controls">
+    <input type="date" id="date" />
+    <label>season wt <input type="number" id="wt" step="0.05" min="0" max="1" value="0.70" /></label>
+    <button id="run">Run slate</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="meta" id="meta"></div>
+  <div id="top5"></div>
+  <div id="cards"></div>
+</div>
+
+<script>
+const API = "https://statsapi.mlb.com/api/v1";
+const RUNGS = [4,5,6,7,8,9];
+const PARK_K = {115:96,111:97,118:97,144:98,141:98,136:103,137:102,119:101,
+  121:101,143:101,117:100,133:100,108:99,109:100,110:99,112:100,113:99,
+  114:100,116:100,120:101,134:100,135:102,138:100,139:101,140:99,142:101,
+  145:100,146:101,147:100,158:99};
+
+const $ = (id) => document.getElementById(id);
+
+function oddsRatioK(pk, ok, lg) {
+  const o = ((pk/(1-pk)) * (ok/(1-ok))) / (lg/(1-lg));
+  return o/(1+o);
+}
+function normalSample() {
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function simulate(adjK, bfMean, sims=8000, bfSd=3.5) {
+  const counts = new Array(30).fill(0);
+  let total = 0;
+  for (let s=0; s<sims; s++) {
+    let bf = Math.round(bfMean + bfSd*normalSample());
+    bf = Math.max(6, Math.min(33, bf));
+    let k = 0;
+    for (let i=0; i<bf; i++) if (Math.random() < adjK) k++;
+    counts[Math.min(k,29)]++;
+    total += k;
+  }
+  const expK = total/sims;
+  const rungProbs = RUNGS.map(r => {
+    let c=0; for (let i=r;i<30;i++) c+=counts[i];
+    return c/sims;
+  });
+  return { expK, rungProbs };
+}
+function fairOdds(p) {
+  if (p<=0.001) return "+99900";
+  if (p>=0.999) return "-99900";
+  return p>=0.5 ? "-"+Math.round(100*p/(1-p)) : "+"+Math.round(100*(1-p)/p);
+}
+async function j(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status + " on " + url.slice(0,60));
+  return r.json();
+}
+function kpct(stat) {
+  const so = Number(stat?.strikeOuts ?? 0);
+  const pa = Number(stat?.plateAppearances ?? stat?.battersFaced ?? 0);
+  return pa>0 ? so/pa : null;
+}
+
+// ---------- Statcast layer: pitch-level SwStr / CSW from official feeds ----------
+async function statcastCheck(pitcherId, season, dateStr) {
+  const log = await j(`${API}/people/${pitcherId}/stats?stats=gameLog&group=pitching&season=${season}`);
+  const splits = (log.stats?.[0]?.splits ?? [])
+    .filter(s => Number(s.stat?.gamesStarted ?? 0) >= 1 && s.date < dateStr)
+    .sort((a,b) => b.date.localeCompare(a.date))
+    .slice(0, 3);
+  if (!splits.length) throw new Error("no recent starts found");
+
+  const perStart = [];
+  let tPitch=0, tWhiff=0, tCalled=0, tSwing=0;
+  const mix = {}; // pitchType -> {p: pitches, sw: swings, w: whiffs}
+
+  for (const s of splits) {
+    const pk = s.game?.gamePk;
+    if (!pk) continue;
+    const pbp = await j(`${API}/game/${pk}/playByPlay`);
+    let pitches=0, whiffs=0, called=0;
+    for (const play of (pbp.allPlays ?? [])) {
+      if (play.matchup?.pitcher?.id !== pitcherId) continue;
+      for (const ev of (play.playEvents ?? [])) {
+        if (!ev.isPitch) continue;
+        pitches++;
+        const d = ev.details?.description ?? "";
+        const pt = ev.details?.type?.code ?? "??";
+        if (!mix[pt]) mix[pt] = {p:0, sw:0, w:0};
+        mix[pt].p++;
+        const isWhiff = d.startsWith("Swinging Strike") || d === "Foul Tip" || d === "Missed Bunt";
+        const isSwing = isWhiff || d.startsWith("Foul") || d.startsWith("In play");
+        if (isSwing) { mix[pt].sw++; tSwing++; }
+        if (isWhiff) { whiffs++; mix[pt].w++; }
+        else if (d === "Called Strike") called++;
+      }
+    }
+    tPitch += pitches; tWhiff += whiffs; tCalled += called;
+    perStart.push({ date: s.date, opp: TEAM_ABBR[s.opponent?.id] ?? s.opponent?.abbreviation ?? s.opponent?.name ?? "",
+      k: Number(s.stat?.strikeOuts ?? 0), ip: s.stat?.inningsPitched ?? "", pitches, 
+      swstr: pitches ? whiffs/pitches : 0, csw: pitches ? (whiffs+called)/pitches : 0 });
+  }
+  if (!tPitch) throw new Error("no pitch data in feeds");
+  const topMix = Object.entries(mix)
+    .filter(([,v]) => v.p >= 15 && v.sw >= 8)
+    .sort((a,b) => b[1].w/b[1].sw - a[1].w/a[1].sw)
+    .slice(0, 4)
+    .map(([pt,v]) => ({ pt, usage: v.p/tPitch, whiff: v.w/v.sw }));
+  return {
+    perStart,
+    swstr: tWhiff/tPitch, csw: (tWhiff+tCalled)/tPitch,
+    whiffPerSwing: tSwing ? tWhiff/tSwing : 0,
+    pitches: tPitch, topMix,
+  };
+}
+
+function verdictFor(sc) {
+  // league avg ~ SwStr 11%, CSW 28.5%
+  const csw = (sc.csw*100).toFixed(1), sws = (sc.swstr*100).toFixed(1);
+  if (sc.csw >= 0.30 || sc.swstr >= 0.13)
+    return ["STUFF: HOT", "v-confirm",
+      (sc.csw >= 0.30 ? `CSW ${csw}% ≥ 30` : `SwStr ${sws}% ≥ 13`) +
+      " — real swing-&-miss right now, projection is whiff-backed. Trust the rungs."];
+  if (sc.csw >= 0.27)
+    return ["STUFF: AVG", "v-neutral",
+      `CSW ${csw}% (lg ~28.5) — league-average stuff. Projection fine, no extra conviction.`];
+  return ["STUFF: COLD", "v-flag",
+    `CSW ${csw}% < 27 — K% not backed by recent whiffs (ump/lineup luck or fading form). Fade high rungs.`];
+}
+
+const TEAM_ABBR = {};
+
+async function fetchSlate(dateStr, recencyWt, setStatus) {
+  const season = dateStr.slice(0,4);
+  setStatus("Loading schedule + probables…");
+  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher`);
+  const games = (sched.dates && sched.dates[0] && sched.dates[0].games) || [];
+  if (!games.length) throw new Error("No games on this date.");
+
+  if (!Object.keys(TEAM_ABBR).length) {
+    const tms = await j(`${API}/teams?sportId=1&season=${season}`);
+    for (const t of (tms.teams ?? [])) TEAM_ABBR[t.id] = t.abbreviation ?? t.teamName ?? t.name;
+  }
+  const abbr = (team) => TEAM_ABBR[team?.id] ?? team?.abbreviation ?? team?.name ?? "?";
+
+  setStatus("Loading league hitting baselines…");
+  const teamStats = await j(`${API}/teams/stats?season=${season}&group=hitting&stats=season&sportIds=1`);
+  const teamK = {}; let lgSO=0, lgPA=0;
+  for (const s of (teamStats.stats?.[0]?.splits ?? [])) {
+    teamK[s.team.id] = kpct(s.stat);
+    lgSO += Number(s.stat.strikeOuts ?? 0);
+    lgPA += Number(s.stat.plateAppearances ?? 0);
+  }
+  const lgK = lgPA>0 ? lgSO/lgPA : 0.223;
+
+  const end = new Date(dateStr+"T12:00:00");
+  const start = new Date(end); start.setDate(start.getDate()-30);
+  const startStr = start.toISOString().slice(0,10);
+
+  const entries = [];
+  for (const g of games) for (const side of ["away","home"]) {
+    const pp = g.teams[side].probablePitcher;
+    if (!pp) continue;
+    entries.push({
+      id: pp.id, name: pp.fullName,
+      teamAbbr: abbr(g.teams[side].team),
+      oppAbbr: abbr(g.teams[side==="away"?"home":"away"].team),
+      opp: g.teams[side==="away"?"home":"away"].team,
+      homeTeamId: g.teams.home.team.id,
+    });
+  }
+
+  const results = [];
+  const splitCache = {};
+  for (let i=0; i<entries.length; i+=6) {
+    const batch = entries.slice(i, i+6);
+    const settled = await Promise.allSettled(batch.map(async (e) => {
+      const person = await j(`${API}/people/${e.id}?hydrate=stats(group=[pitching],type=[season,byDateRange],startDate=${startStr},endDate=${dateStr},season=${season})`);
+      const p = person.people?.[0];
+      const hand = p?.pitchHand?.code === "L" ? "L" : "R";
+      let seasonStat=null, l30Stat=null;
+      for (const grp of (p?.stats ?? [])) {
+        const t = grp.type?.displayName;
+        const st = grp.splits?.[0]?.stat;
+        if (t==="season") seasonStat = st;
+        if (t==="byDateRange") l30Stat = st;
+      }
+      if (!seasonStat) throw new Error("no season stats");
+      const gs = Number(seasonStat.gamesStarted ?? 0);
+      const bfTot = Number(seasonStat.battersFaced ?? 0);
+      if (gs<3 || bfTot<40) throw new Error("insufficient sample");
+      const pkSeason = kpct(seasonStat);
+      const pkL30 = l30Stat ? kpct(l30Stat) : null;
+      const pk = pkL30!=null ? recencyWt*pkSeason + (1-recencyWt)*pkL30 : pkSeason;
+      const bfMean = bfTot/gs;
+
+      const sit = hand==="L" ? "vl" : "vr";
+      const key = e.opp.id+"-"+sit;
+      let ok = teamK[e.opp.id];
+      try {
+        if (!(key in splitCache)) {
+          const sp = await j(`${API}/teams/${e.opp.id}/stats?stats=statSplits&group=hitting&season=${season}&sitCodes=${sit}`);
+          splitCache[key] = kpct(sp.stats?.[0]?.splits?.[0]?.stat);
+        }
+        if (splitCache[key]) ok = splitCache[key];
+      } catch(_) {}
+      if (!pk || !ok) throw new Error("missing rates");
+
+      const park = (PARK_K[e.homeTeamId] ?? 100)/100;
+      const adjK = Math.min(0.6, Math.max(0.02, oddsRatioK(pk, ok, lgK)*park));
+      const sim = simulate(adjK, bfMean);
+      return Object.assign({}, e, {hand, pkSeason, pkL30, pk, ok, bfMean, adjK,
+        expK: sim.expK, rungProbs: sim.rungProbs, park: PARK_K[e.homeTeamId] ?? 100});
+    }));
+    settled.forEach((s, idx) => {
+      if (s.status==="fulfilled") results.push(s.value);
+      else results.push(Object.assign({}, batch[idx], {error: s.reason?.message ?? "failed"}));
+    });
+    setStatus(`Loaded ${Math.min(i+6, entries.length)}/${entries.length} starters…`);
+  }
+  results.sort((a,b) => (b.expK ?? -1) - (a.expK ?? -1));
+  return { results, lgK, nGames: games.length };
+}
+
+function render(data) {
+  $("meta").textContent =
+    `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · sorted by projected K · tap a card for detail`;
+  const cards = $("cards");
+  cards.innerHTML = "";
+  // ---- TOP 5 SLATE PITCHERS ----
+  const top5 = data.results.filter(r => !r.error).slice(0, 5);
+  const t5 = $("top5");
+  t5.innerHTML = top5.length ? `<div class="t5"><div class="t5title">TOP 5 SLATE PITCHERS</div>` +
+    top5.map((r, i) => {
+      const p7 = r.rungProbs[RUNGS.indexOf(7)];
+      const hot = p7>=0.6 ? "var(--teal)" : p7>=0.35 ? "var(--purple)" : "var(--dim)";
+      return `<div class="t5row" data-jump="${r.id}">
+        <span class="rk">${i+1}</span>
+        <span class="nm">${r.name} <span id="tv-${r.id}"></span></span>
+        <span class="mu">${r.teamAbbr} v ${r.oppAbbr}</span>
+        <span class="k">${r.expK.toFixed(1)}K</span>
+        <span class="r7" style="color:${hot}">7+ ${(p7*100).toFixed(0)}% ${fairOdds(p7)}</span>
+      </div>`;
+    }).join("") + `</div>` : "";
+  t5.querySelectorAll(".t5row").forEach(row => {
+    row.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const id = row.dataset.jump;
+      const card = $("card-" + id);
+      if (!card) return;
+      const d = $("det-" + id);
+      if (d) d.style.display = "block";
+      card.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+  });
+  for (const r of data.results) {
+    const div = document.createElement("div");
+    if (r.error) {
+      div.className = "card skip";
+      div.innerHTML = `<span class="pname" style="font-size:13px">${r.name}</span>
+        <span class="ptag">${r.teamAbbr ?? "?"} vs ${r.oppAbbr ?? "?"} — skipped (${r.error})</span>`;
+      cards.appendChild(div);
+      continue;
+    }
+    div.className = "card compact";
+    div.id = "card-" + r.id;
+    // compact rung chips: 5+ through 9+
+    const chips = RUNGS.filter(x => x >= 5).map((rung) => {
+      const p = r.rungProbs[RUNGS.indexOf(rung)];
+      const hot = p>=0.6 ? "var(--teal)" : p>=0.35 ? "var(--purple)" : "var(--dim)";
+      return `<span class="chip" style="color:${hot}">${rung}+ ${(p*100).toFixed(0)}% ${fairOdds(p)}</span>`;
+    }).join("");
+    // full bars for detail view
+    const bars = RUNGS.map((rung, i) => {
+      const p = r.rungProbs[i];
+      const hot = p>=0.6 ? "var(--teal)" : p>=0.35 ? "var(--purple)" : "var(--dim)";
+      return `<div class="rung">
+        <span class="lbl">${rung}+</span>
+        <div class="bar"><div class="fill" style="width:${Math.round(p*100)}%;background:${hot}"></div></div>
+        <span class="pct">${(p*100).toFixed(0)}%</span>
+        <span class="fair" style="color:${hot}">${fairOdds(p)}</span>
+      </div>`;
+    }).join("");
+    div.innerHTML = `
+      <div class="head">
+        <div><span class="pname">${r.name}</span>
+          <span class="ptag">${r.teamAbbr} v ${r.oppAbbr}</span>
+          <span id="vbadge-${r.id}"></span></div>
+        <div><span class="expk">${r.expK.toFixed(1)}K</span></div>
+      </div>
+      <div class="chips">${chips}</div>
+      <div class="scsum" id="scsum-${r.id}">statcast loading…</div>
+      <div class="detail" id="det-${r.id}" style="display:none">
+        <div class="rates">${r.hand}HP · park ${r.park} · adjK ${(r.adjK*100).toFixed(1)}% · BF ${r.bfMean.toFixed(1)} · pK szn ${(r.pkSeason*100).toFixed(1)}%${
+          r.pkL30!=null ? " · L30 "+(r.pkL30*100).toFixed(1)+"%" : ""
+        } · opp K% v${r.hand} ${(r.ok*100).toFixed(1)}%</div>
+        ${bars}
+        <div class="scpanel" id="sc-${r.id}"><span style="color:var(--dim)">statcast loading…</span></div>
+      </div>`;
+    div.addEventListener("click", () => {
+      const d = $("det-" + r.id);
+      d.style.display = d.style.display === "none" ? "block" : "none";
+    });
+    cards.appendChild(div);
+  }
+  autoStatcast(data.results.filter(r => !r.error));
+}
+
+const SC_CACHE = {};
+
+function renderScPanel(pid, sc) {
+  const badge = $("vbadge-" + pid);
+  const sum = $("scsum-" + pid);
+  const panel = $("sc-" + pid);
+  if (sc.failed) {
+    if (sum) sum.innerHTML = `<span style="color:var(--dim)">no statcast (${sc.failed})</span>`;
+    if (panel) panel.innerHTML = "";
+    return;
+  }
+  const [vTxt, vCls, vWhy] = verdictFor(sc);
+  if (badge) badge.innerHTML = `<span class="verdict ${vCls}">${vTxt}</span>`;
+  const tvb = $("tv-" + pid);
+  if (tvb) tvb.innerHTML = `<span class="verdict ${vCls}" style="font-size:9px;padding:1px 5px">${vTxt}</span>`;
+  if (sum) sum.innerHTML =
+    `SwStr ${(sc.swstr*100).toFixed(1)} · CSW ${(sc.csw*100).toFixed(1)} · Whiff ${(sc.whiffPerSwing*100).toFixed(1)} <span style="color:var(--dim)">(L3 · lg ~11/28.5/25)</span>` +
+    `<div style="color:var(--dim);margin-top:2px">${vWhy}</div>`;
+  if (!panel) return;
+  const starts = sc.perStart.map(s =>
+    `<div class="scrow"><span class="k">${s.date} vs ${s.opp} · ${s.ip} IP · ${s.k}K</span>` +
+    `<span>SwStr ${(s.swstr*100).toFixed(1)}% · CSW ${(s.csw*100).toFixed(1)}%</span></div>`
+  ).join("");
+  const mix = sc.topMix.map(m =>
+    `<b>${m.pt}</b> ${(m.usage*100).toFixed(0)}% use / ${(m.whiff*100).toFixed(0)}% whiff`
+  ).join(" · ");
+  panel.innerHTML = `<span style="color:var(--dim)">${sc.pitches} pitches, last 3 starts</span>` +
+    starts + (mix ? `<div class="pmix">${mix} <span style="opacity:.7">(whiff = per swing, Savant defn)</span></div>` : "");
+}
+
+async function autoStatcast(list) {
+  const dateStr = $("date").value;
+  const season = dateStr.slice(0,4);
+  let done = 0;
+  for (let i = 0; i < list.length; i += 3) {
+    const batch = list.slice(i, i+3);
+    await Promise.allSettled(batch.map(async (r) => {
+      try {
+        const sc = await statcastCheck(r.id, season, dateStr);
+        SC_CACHE[r.id] = sc;
+        renderScPanel(r.id, sc);
+      } catch (e) {
+        SC_CACHE[r.id] = { failed: e.message };
+        renderScPanel(r.id, SC_CACHE[r.id]);
+      } finally {
+        done++;
+        $("status").textContent = done < list.length ? `Statcast: ${done}/${list.length} starters…` : "";
+      }
+    }));
+  }
+}
+
+async function run() {
+  const btn = $("run");
+  btn.disabled = true; btn.textContent = "Running…";
+  $("status").classList.remove("error");
+  $("cards").innerHTML = ""; $("meta").textContent = "";
+  try {
+    const data = await fetchSlate($("date").value, Number($("wt").value), 
+      (m) => { $("status").textContent = m; });
+    $("status").textContent = "";
+    render(data);
+  } catch (e) {
+    $("status").textContent = "Error: " + e.message;
+    $("status").classList.add("error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Run slate";
+  }
+}
+
+$("date").value = new Date().toISOString().slice(0,10);
+$("run").addEventListener("click", run);
+run();
+</script>
+</body>
+</html>

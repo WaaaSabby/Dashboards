@@ -275,7 +275,7 @@ const TEAM_ABBR = {};
 async function fetchSlate(dateStr, recencyWt, setStatus) {
   const season = dateStr.slice(0,4);
   setStatus("Loading schedule + probables…");
-  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher`);
+  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher,lineups`);
   const games = (sched.dates && sched.dates[0] && sched.dates[0].games) || [];
   if (!games.length) throw new Error("No games on this date.");
 
@@ -303,12 +303,26 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
   for (const g of games) for (const side of ["away","home"]) {
     const pp = g.teams[side].probablePitcher;
     if (!pp) continue;
+    const oppSide = side==="away"?"home":"away";
+    // opponent lineup handedness if posted (L/R/S counts among the 9)
+    const luKey = oppSide + "Players";
+    const lu = g.lineups?.[luKey] ?? [];
+    let lhb=0, rhb=0, switch_=0, luPosted=false;
+    if (lu.length >= 8) {
+      luPosted = true;
+      for (const pl of lu) {
+        const b = pl.batSide?.code ?? pl.batside?.code;
+        if (b === "L") lhb++; else if (b === "S") switch_++; else rhb++;
+      }
+    }
     entries.push({
       id: pp.id, name: pp.fullName,
       teamAbbr: abbr(g.teams[side].team),
-      oppAbbr: abbr(g.teams[side==="away"?"home":"away"].team),
-      opp: g.teams[side==="away"?"home":"away"].team,
+      oppAbbr: abbr(g.teams[oppSide].team),
+      opp: g.teams[oppSide].team,
+      oppTeamId: g.teams[oppSide].team.id,
       homeTeamId: g.teams.home.team.id,
+      luPosted, lhb, rhb, switch_,
     });
   }
 
@@ -336,6 +350,17 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
       const pk = pkL30!=null ? recencyWt*pkSeason + (1-recencyWt)*pkL30 : pkSeason;
       const bfMean = bfTot/gs;
 
+      // pitcher's own K% vs LHB / RHB (reverse-split detection)
+      let pkVL=null, pkVR=null;
+      try {
+        const sp2 = await j(`${API}/people/${e.id}/stats?stats=statSplits&group=pitching&season=${season}&sitCodes=vl,vr`);
+        for (const sp of (sp2.stats?.[0]?.splits ?? [])) {
+          const code = sp.split?.code;
+          const kp = kpct(sp.stat);
+          if (code === "vl") pkVL = kp; else if (code === "vr") pkVR = kp;
+        }
+      } catch(_) {}
+
       const sit = hand==="L" ? "vl" : "vr";
       const key = e.opp.id+"-"+sit;
       let ok = teamK[e.opp.id];
@@ -349,12 +374,30 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
       if (!pk || !ok) throw new Error("missing rates");
 
       const park = (PARK_K[e.homeTeamId] ?? 100)/100;
-      const adjK = Math.min(0.6, Math.max(0.02, oddsRatioK(pk, ok, lgK)*park));
+      let adjK = Math.min(0.6, Math.max(0.02, oddsRatioK(pk, ok, lgK)*park));
+
+      // ---- platoon adjustment: pitcher's vL/vR split vs today's lineup handedness ----
+      let platoonMult = 1, lhbShare = null, splitGap = null;
+      if (pkVL != null && pkVR != null && pk > 0) {
+        // switch hitters bat opposite the pitcher's hand: vs RHP -> bat L
+        const effLhb = e.luPosted ? (e.lhb + e.switch_) : null;
+        const effRhb = e.luPosted ? e.rhb : null;
+        // lineup lefty share; fallback ~0.40 league-ish when not posted
+        lhbShare = e.luPosted ? effLhb / (effLhb + effRhb) : 0.40;
+        // expected K% given this lineup mix vs the pitcher's splits
+        const lineupK = lhbShare * pkVL + (1 - lhbShare) * pkVR;
+        platoonMult = lineupK / pk;            // >1 favorable mix, <1 tough (e.g. lefty-heavy vs reverse-split RHP)
+        platoonMult = Math.min(1.25, Math.max(0.80, platoonMult));
+        splitGap = pkVR - pkVL;                // + = tougher on lefties (normal); - = reverse split
+        adjK = Math.min(0.6, Math.max(0.02, adjK * platoonMult));
+      }
+
       const sim = simulate(adjK, bfMean);
       let oppK = [];
       try { oppK = await oppKHistory(e.id, e.opp.id, season); } catch {}
       return Object.assign({}, e, {hand, pkSeason, pkL30, pk, ok, bfMean, adjK,
-        expK: sim.expK, rungProbs: sim.rungProbs, park: PARK_K[e.homeTeamId] ?? 100, oppK});
+        expK: sim.expK, rungProbs: sim.rungProbs, park: PARK_K[e.homeTeamId] ?? 100, oppK,
+        pkVL, pkVR, platoonMult, lhbShare, splitGap});
     }));
     settled.forEach((s, idx) => {
       if (s.status==="fulfilled") results.push(s.value);
@@ -437,11 +480,12 @@ function render(data) {
       </div>
       <div class="chips">${chips}</div>
       <div class="oppk">${oppKLine(r)}</div>
+      <div class="oppk">${platoonLine(r)}</div>
       <div class="scsum" id="scsum-${r.id}">statcast loading…</div>
       <div class="detail" id="det-${r.id}" style="display:none">
         <div class="rates">${r.hand}HP · park ${r.park} · adjK ${(r.adjK*100).toFixed(1)}% · BF ${r.bfMean.toFixed(1)} · pK szn ${(r.pkSeason*100).toFixed(1)}%${
           r.pkL30!=null ? " · L30 "+(r.pkL30*100).toFixed(1)+"%" : ""
-        } · opp K% v${r.hand} ${(r.ok*100).toFixed(1)}%</div>
+        }${r.pkVL!=null ? ` · vL ${(r.pkVL*100).toFixed(1)}% vR ${(r.pkVR*100).toFixed(1)}%` : ""} · opp K% v${r.hand} ${(r.ok*100).toFixed(1)}%</div>
         ${oppKDetail(r)}
         ${bars}
         <div class="scpanel" id="sc-${r.id}"><span style="color:var(--dim)">statcast loading…</span></div>
@@ -456,6 +500,24 @@ function render(data) {
 }
 
 const SC_CACHE = {};
+
+function platoonLine(r) {
+  if (r.pkVL == null || r.pkVR == null)
+    return `<span style="color:var(--dim)">platoon: no split data</span>`;
+  const vl = (r.pkVL*100).toFixed(0), vr = (r.pkVR*100).toFixed(0);
+  const reverse = r.splitGap < -0.02; // strikes out RIGHTIES notably more — unusual
+  const mix = r.luPosted
+    ? `${r.lhb}L/${r.rhb}R${r.switch_?`/${r.switch_}S`:""}`
+    : `~${Math.round((r.lhbShare??0.4)*100)}% L (proj)`;
+  const m = r.platoonMult ?? 1;
+  const mCol = m>=1.03 ? "var(--teal)" : m<=0.97 ? "#FF6B6B" : "var(--dim)";
+  const mTxt = m>=1.03 ? `+${((m-1)*100).toFixed(0)}% favorable`
+    : m<=0.97 ? `${((m-1)*100).toFixed(0)}% tough`
+    : "neutral";
+  const flag = reverse ? ` <span style="color:#FF6B6B;font-weight:700">⚠REVERSE</span>` : "";
+  return `<span style="color:var(--dim)">K% vL ${vl}·vR ${vr} · lineup ${mix} · </span>` +
+    `<span style="color:${mCol};font-weight:700">${mTxt}</span>${flag}`;
+}
 
 function oppKLine(r) {
   if (!r.oppK || !r.oppK.length)

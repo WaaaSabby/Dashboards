@@ -423,7 +423,7 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
 function render(data) {
   $("meta").innerHTML =
     `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · lineups posted ${data.luCount}/${data.nStarters} · tap a card for detail` +
-    `<div style="margin-top:4px;color:var(--dim);font-size:11px">Platoon line: <b style="color:var(--text)">K% vL/vR</b> = how often he strikes out lefties vs righties · <b style="color:var(--text)">favorable/tough</b> = whether today's lineup handedness helps his Ks · <b style="color:#FF6B6B">⚠ WEAK vs LHB/RHB</b> = the side he Ks noticeably less; "(reverse)" means it's the opposite of the usual pattern for his hand — fade high rungs when the lineup leans toward his weak side</div>`;
+    `<div style="margin-top:4px;color:var(--dim);font-size:11px">Platoon line: <b style="color:var(--text)">K% vL/vR</b> = how often he strikes out lefties vs righties · <b style="color:var(--text)">favorable/tough</b> = whether today's lineup handedness helps his Ks · <b style="color:#FF6B6B">⚠ WEAK vs LHB/RHB</b> = genuinely soft (below ~20% K) on that side, fade high rungs if the lineup leans there · <b style="color:var(--amber)">↔ reverse lean</b> = unusual split direction but both sides fine, just context</div>`;
   const cards = $("cards");
   cards.innerHTML = "";
   // ---- TOP 5 SLATE PITCHERS ----
@@ -517,13 +517,17 @@ function platoonLine(r) {
   if (r.pkVL == null || r.pkVR == null)
     return `<span style="color:var(--dim)">platoon: no split data</span>`;
   const vl = (r.pkVL*100).toFixed(0), vr = (r.pkVR*100).toFixed(0);
-  // reverse split = strikes out his SAME side less than opposite (unusual).
-  // For RHP normal is vR > vL (tougher on righties). splitGap = vR - vL.
-  // Weak side = whichever side he Ks LESS. Flag only when the gap is notable.
-  const weakVsLHB = r.pkVL < r.pkVR - 0.03;   // softer on lefties
-  const weakVsRHB = r.pkVR < r.pkVL - 0.03;   // softer on righties
+  // Flag a side only when he's genuinely below-average at missing bats there
+  // (not merely lower than his other side). League SP K% ~22%.
+  const WEAK_ABS = 0.20;   // below this vs a side = real soft spot
+  const GAP = 0.03;        // and must be his clearly worse side
+  const weakVsLHB = r.pkVL < WEAK_ABS && r.pkVL < r.pkVR - GAP;
+  const weakVsRHB = r.pkVR < WEAK_ABS && r.pkVR < r.pkVL - GAP;
   const weakSide = weakVsLHB ? "LHB" : weakVsRHB ? "RHB" : null;
-  const reverse = (r.hand === "R" && weakVsRHB) || (r.hand === "L" && weakVsLHB); // soft on own-side opposite of norm
+  // reverse = his worse side is the OPPOSITE of the normal same-hand pattern,
+  // shown as context even when not below the absolute weak threshold
+  const lean = r.pkVL < r.pkVR - GAP ? "LHB" : r.pkVR < r.pkVL - GAP ? "RHB" : null;
+  const reverse = (r.hand === "R" && lean === "RHB") || (r.hand === "L" && lean === "LHB");
   const mix = r.luPosted
     ? `${r.lhb}L/${r.rhb}R${r.switch_?`/${r.switch_}S`:""}`
     : `~${Math.round((r.lhbShare??0.4)*100)}% L (proj)`;
@@ -533,8 +537,10 @@ function platoonLine(r) {
     : m<=0.97 ? `${((m-1)*100).toFixed(0)}% tough`
     : "neutral";
   const flag = weakSide
-    ? ` <span style="color:#FF6B6B;font-weight:700" title="Strikes out ${weakSide==="LHB"?"lefties":"righties"} less than ${weakSide==="LHB"?"righties":"lefties"} (${weakSide==="LHB"?vl:vr}% vs ${weakSide==="LHB"?vr:vl}%)${reverse?" — reverse split, opposite of the usual pattern for his hand":""}. Riskier when the lineup leans ${weakSide==="LHB"?"lefty":"righty"}.">⚠ WEAK vs ${weakSide}${reverse?" (reverse)":""}</span>`
-    : "";
+    ? ` <span style="color:#FF6B6B;font-weight:700" title="Genuinely soft at missing bats vs ${weakSide==="LHB"?"lefties":"righties"} (${weakSide==="LHB"?vl:vr}% K, below ~20%). Riskier when the lineup leans ${weakSide==="LHB"?"lefty":"righty"}.">⚠ WEAK vs ${weakSide}${reverse?" (reverse)":""}</span>`
+    : (reverse && lean
+      ? ` <span style="color:var(--amber)" title="Reverse split: Ks ${lean==="LHB"?"lefties":"righties"} more than the usual pattern for his hand, but both sides are fine — context, not a warning.">↔ reverse lean (better vs ${lean==="RHB"?"LHB":"RHB"})</span>`
+      : "");
   return `<span style="color:var(--dim)">K% vL ${vl}·vR ${vr} · lineup ${mix} · </span>` +
     `<span style="color:${mCol};font-weight:700">${mTxt}</span>${flag}`;
 }

@@ -410,8 +410,9 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
 }
 
 function render(data) {
-  $("meta").textContent =
-    `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · sorted by projected K · tap a card for detail`;
+  $("meta").innerHTML =
+    `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · sorted by projected K · tap a card for detail` +
+    `<div style="margin-top:4px;color:var(--dim);font-size:11px">Platoon line: <b style="color:var(--text)">K% vL/vR</b> = how often he strikes out lefties vs righties · <b style="color:var(--text)">favorable/tough</b> = whether today's lineup handedness helps his Ks · <b style="color:#FF6B6B">⚠ WEAK vs LHB/RHB</b> = reverse split, softer than normal on that side — fade high rungs if the lineup leans that way</div>`;
   const cards = $("cards");
   cards.innerHTML = "";
   // ---- TOP 5 SLATE PITCHERS ----
@@ -514,7 +515,7 @@ function platoonLine(r) {
   const mTxt = m>=1.03 ? `+${((m-1)*100).toFixed(0)}% favorable`
     : m<=0.97 ? `${((m-1)*100).toFixed(0)}% tough`
     : "neutral";
-  const flag = reverse ? ` <span style="color:#FF6B6B;font-weight:700">⚠REVERSE</span>` : "";
+  const flag = reverse ? ` <span style="color:#FF6B6B;font-weight:700" title="Reverse split: this pitcher strikes out ${r.hand==="R"?"LEFTIES":"RIGHTIES"} LESS than his own hand — unusual, and dangerous when facing a lineup stacked that way">⚠ WEAK vs ${r.hand==="R"?"LHB":"RHB"}</span>` : "";
   return `<span style="color:var(--dim)">K% vL ${vl}·vR ${vr} · lineup ${mix} · </span>` +
     `<span style="color:${mCol};font-weight:700">${mTxt}</span>${flag}`;
 }

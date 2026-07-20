@@ -37,6 +37,9 @@
   .chip { white-space:nowrap; }
   .scsum { color:var(--text); font-size:11px; margin-top:5px;
     font-family:ui-monospace,Menlo,monospace; }
+  .oppk { font-size:11px; margin-top:4px; font-family:ui-monospace,Menlo,monospace; }
+  .oppkbox { margin:8px 0; padding:8px; background:#0F0F17; border-radius:6px;
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; }
   .detail { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
   .t5 { background:var(--card); border:1px solid var(--purple); border-radius:10px;
     padding:10px 12px; margin-bottom:14px; }
@@ -93,8 +96,20 @@
   </div>
   <div class="controls">
     <input type="date" id="date" />
-    <label>season wt <input type="number" id="wt" step="0.05" min="0" max="1" value="0.70" /></label>
+    <label>season wt <input type="number" id="wt" step="0.05" min="0" max="1" value="0.70" />
+      <span id="wtinfo" style="color:var(--teal);cursor:pointer;font-weight:700">ⓘ</span></label>
     <button id="run">Run slate</button>
+  </div>
+  <div id="wtnote" style="display:none; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px;
+    color:var(--dim); line-height:1.5">
+    <b style="color:var(--text)">Season wt</b> — how much the model weighs a pitcher's
+    <b style="color:var(--text)">full-season K%</b> vs his <b style="color:var(--text)">last-30-days K%</b>:
+    <span style="font-family:ui-monospace,Menlo,monospace">K% used = wt × season + (1−wt) × last-30</span><br>
+    <b style="color:var(--teal)">0.70 (default)</b> — season leads, recent form nudges. The sane setting.<br>
+    <b style="color:var(--amber)">Lower (0.50–0.60)</b> — trusts recent form more. Use mid-season when L30 is the truer signal (velo bump, new pitch, role change).<br>
+    <b style="color:var(--purple)">Higher (0.85–1.0)</b> — nearly ignores L30 (1.0 = pure season K%). Use early season when 30-day samples are tiny, or when one blowup is skewing L30.<br>
+    Applies to all pitchers — change it and hit Run slate to re-project. Season K% is stable but slow to catch surges/fades; L30 catches form but is noisy (5–6 starts). The blend balances both.
   </div>
   <div class="status" id="status"></div>
   <div class="meta" id="meta"></div>
@@ -154,6 +169,26 @@ function kpct(stat) {
   const so = Number(stat?.strikeOuts ?? 0);
   const pa = Number(stat?.plateAppearances ?? stat?.battersFaced ?? 0);
   return pa>0 ? so/pa : null;
+}
+
+// ---------- Opponent K history: last starts vs today's opponent ----------
+async function oppKHistory(pitcherId, oppTeamId, season) {
+  const out = [];
+  // pull current + prior two seasons of game logs, filter to this opponent
+  for (const yr of [season, String(+season-1), String(+season-2)]) {
+    try {
+      const log = await j(`${API}/people/${pitcherId}/stats?stats=gameLog&group=pitching&season=${yr}`);
+      for (const s of (log.stats?.[0]?.splits ?? [])) {
+        if (s.opponent?.id !== oppTeamId) continue;
+        if (Number(s.stat?.gamesStarted ?? 0) < 1) continue;
+        out.push({ date: s.date, k: Number(s.stat?.strikeOuts ?? 0),
+          ip: s.stat?.inningsPitched ?? "" });
+      }
+    } catch {}
+    if (out.length >= 5) break;
+  }
+  out.sort((a,b) => b.date.localeCompare(a.date));
+  return out.slice(0, 5);
 }
 
 // ---------- Statcast layer: pitch-level SwStr / CSW from official feeds ----------
@@ -304,8 +339,10 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
       const park = (PARK_K[e.homeTeamId] ?? 100)/100;
       const adjK = Math.min(0.6, Math.max(0.02, oddsRatioK(pk, ok, lgK)*park));
       const sim = simulate(adjK, bfMean);
+      let oppK = [];
+      try { oppK = await oppKHistory(e.id, e.opp.id, season); } catch {}
       return Object.assign({}, e, {hand, pkSeason, pkL30, pk, ok, bfMean, adjK,
-        expK: sim.expK, rungProbs: sim.rungProbs, park: PARK_K[e.homeTeamId] ?? 100});
+        expK: sim.expK, rungProbs: sim.rungProbs, park: PARK_K[e.homeTeamId] ?? 100, oppK});
     }));
     settled.forEach((s, idx) => {
       if (s.status==="fulfilled") results.push(s.value);
@@ -384,11 +421,13 @@ function render(data) {
         <div><span class="expk">${r.expK.toFixed(1)}K</span></div>
       </div>
       <div class="chips">${chips}</div>
+      <div class="oppk">${oppKLine(r)}</div>
       <div class="scsum" id="scsum-${r.id}">statcast loading…</div>
       <div class="detail" id="det-${r.id}" style="display:none">
         <div class="rates">${r.hand}HP · park ${r.park} · adjK ${(r.adjK*100).toFixed(1)}% · BF ${r.bfMean.toFixed(1)} · pK szn ${(r.pkSeason*100).toFixed(1)}%${
           r.pkL30!=null ? " · L30 "+(r.pkL30*100).toFixed(1)+"%" : ""
         } · opp K% v${r.hand} ${(r.ok*100).toFixed(1)}%</div>
+        ${oppKDetail(r)}
         ${bars}
         <div class="scpanel" id="sc-${r.id}"><span style="color:var(--dim)">statcast loading…</span></div>
       </div>`;
@@ -402,6 +441,26 @@ function render(data) {
 }
 
 const SC_CACHE = {};
+
+function oppKLine(r) {
+  if (!r.oppK || !r.oppK.length)
+    return `<span style="color:var(--dim)">vs ${r.oppAbbr}: no prior starts</span>`;
+  const ks = r.oppK.map(g => g.k);
+  const avg = ks.reduce((a,b)=>a+b,0)/ks.length;
+  const hot = avg>=6 ? "var(--teal)" : avg>=4 ? "var(--purple)" : "var(--dim)";
+  return `<span style="color:var(--dim)">vs ${r.oppAbbr} last ${ks.length}: </span>` +
+    `<span style="color:${hot};font-weight:700">${ks.join("·")}K</span>` +
+    `<span style="color:var(--dim)"> (avg ${avg.toFixed(1)})</span>`;
+}
+
+function oppKDetail(r) {
+  if (!r.oppK || !r.oppK.length) return "";
+  const rows = r.oppK.map(g =>
+    `<div class="scrow"><span class="k">${g.date}</span>` +
+    `<span>${g.ip} IP · <b style="color:var(--text)">${g.k}K</b></span></div>`
+  ).join("");
+  return `<div class="oppkbox"><div style="color:var(--amber);font-weight:700;font-size:11px;letter-spacing:.5px;margin-bottom:3px">K LOG vs ${r.oppAbbr} (last ${r.oppK.length})</div>${rows}</div>`;
+}
 
 function renderScPanel(pid, sc) {
   const badge = $("vbadge-" + pid);
@@ -473,6 +532,10 @@ async function run() {
 
 $("date").value = new Date().toISOString().slice(0,10);
 $("run").addEventListener("click", run);
+$("wtinfo").addEventListener("click", () => {
+  const n = $("wtnote");
+  n.style.display = n.style.display === "none" ? "block" : "none";
+});
 run();
 </script>
 </body>

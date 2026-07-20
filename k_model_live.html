@@ -275,7 +275,7 @@ const TEAM_ABBR = {};
 async function fetchSlate(dateStr, recencyWt, setStatus) {
   const season = dateStr.slice(0,4);
   setStatus("Loading schedule + probables…");
-  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher,lineups`);
+  const sched = await j(`${API}/schedule?sportId=1&date=${dateStr}&hydrate=probablePitcher`);
   const games = (sched.dates && sched.dates[0] && sched.dates[0].games) || [];
   if (!games.length) throw new Error("No games on this date.");
 
@@ -300,21 +300,31 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
   const startStr = start.toISOString().slice(0,10);
 
   const entries = [];
+  // fetch confirmed lineups from each game's boxscore (has battingOrder + batSide)
+  setStatus("Checking posted lineups…");
+  const luByGameSide = {};
+  await Promise.allSettled(games.map(async (g) => {
+    try {
+      const box = await j(`${API}/game/${g.gamePk}/boxscore`);
+      for (const sd of ["away","home"]) {
+        const tm = box.teams?.[sd];
+        const order = tm?.battingOrder ?? [];
+        let lhb=0, rhb=0, sw=0;
+        for (const pid of order) {
+          const pl = tm.players?.[`ID${pid}`];
+          const code = pl?.person?.batSide?.code;
+          if (code === "L") lhb++; else if (code === "S") sw++; else if (code === "R") rhb++;
+        }
+        luByGameSide[`${g.gamePk}-${sd}`] = { lhb, rhb, sw, posted: order.length >= 8 };
+      }
+    } catch(_) {}
+  }));
+
   for (const g of games) for (const side of ["away","home"]) {
     const pp = g.teams[side].probablePitcher;
     if (!pp) continue;
     const oppSide = side==="away"?"home":"away";
-    // opponent lineup handedness if posted (L/R/S counts among the 9)
-    const luKey = oppSide + "Players";
-    const lu = g.lineups?.[luKey] ?? [];
-    let lhb=0, rhb=0, switch_=0, luPosted=false;
-    if (lu.length >= 8) {
-      luPosted = true;
-      for (const pl of lu) {
-        const b = pl.batSide?.code ?? pl.batside?.code;
-        if (b === "L") lhb++; else if (b === "S") switch_++; else rhb++;
-      }
-    }
+    const lu = luByGameSide[`${g.gamePk}-${oppSide}`] ?? { lhb:0, rhb:0, sw:0, posted:false };
     entries.push({
       id: pp.id, name: pp.fullName,
       teamAbbr: abbr(g.teams[side].team),
@@ -322,7 +332,7 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
       opp: g.teams[oppSide].team,
       oppTeamId: g.teams[oppSide].team.id,
       homeTeamId: g.teams.home.team.id,
-      luPosted, lhb, rhb, switch_,
+      luPosted: lu.posted, lhb: lu.lhb, rhb: lu.rhb, switch_: lu.sw,
     });
   }
 
@@ -406,12 +416,13 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
     setStatus(`Loaded ${Math.min(i+6, entries.length)}/${entries.length} starters…`);
   }
   results.sort((a,b) => (b.expK ?? -1) - (a.expK ?? -1));
-  return { results, lgK, nGames: games.length };
+  const luCount = entries.filter(e => e.luPosted).length;
+  return { results, lgK, nGames: games.length, luCount, nStarters: entries.length };
 }
 
 function render(data) {
   $("meta").innerHTML =
-    `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · sorted by projected K · tap a card for detail` +
+    `${data.nGames} games · league K% ${(data.lgK*100).toFixed(1)}% · lineups posted ${data.luCount}/${data.nStarters} · tap a card for detail` +
     `<div style="margin-top:4px;color:var(--dim);font-size:11px">Platoon line: <b style="color:var(--text)">K% vL/vR</b> = how often he strikes out lefties vs righties · <b style="color:var(--text)">favorable/tough</b> = whether today's lineup handedness helps his Ks · <b style="color:#FF6B6B">⚠ WEAK vs LHB/RHB</b> = the side he Ks noticeably less; "(reverse)" means it's the opposite of the usual pattern for his hand — fade high rungs when the lineup leans toward his weak side</div>`;
   const cards = $("cards");
   cards.innerHTML = "";

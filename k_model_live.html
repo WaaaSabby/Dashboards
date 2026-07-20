@@ -21,6 +21,8 @@
   input, button { font-size:13px; border-radius:8px; }
   input { background:var(--card); color:var(--text); border:1px solid var(--line); padding:7px 10px; }
   input[type=number] { width:64px; }
+  select { background:var(--card); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:6px 8px; font-size:13px; }
   label { color:var(--dim); font-size:12px; }
   button { background:var(--purple); color:#0B0B10; font-weight:700; border:none;
     padding:8px 16px; cursor:pointer; }
@@ -99,6 +101,16 @@
     <label>season wt <input type="number" id="wt" step="0.05" min="0" max="1" value="0.70" />
       <span id="wtinfo" style="color:var(--teal);cursor:pointer;font-weight:700">ⓘ</span></label>
     <button id="run">Run slate</button>
+    <label style="margin-left:4px">sort <select id="sortby">
+      <option value="k">Projected K</option>
+      <option value="form">Form</option>
+    </select></label>
+    <label>show <select id="showform">
+      <option value="all">All</option>
+      <option value="hot">Hot only</option>
+      <option value="avg">Avg only</option>
+      <option value="cold">Cold only</option>
+    </select></label>
   </div>
   <div id="wtnote" style="display:none; background:var(--card); border:1px solid var(--line);
     border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px;
@@ -385,17 +397,20 @@ function render(data) {
       card.scrollIntoView({ behavior:"smooth", block:"start" });
     });
   });
-  for (const r of data.results) {
+  data.results.forEach((r, idx) => {
     const div = document.createElement("div");
     if (r.error) {
       div.className = "card skip";
       div.innerHTML = `<span class="pname" style="font-size:13px">${r.name}</span>
         <span class="ptag">${r.teamAbbr ?? "?"} vs ${r.oppAbbr ?? "?"} — skipped (${r.error})</span>`;
       cards.appendChild(div);
-      continue;
+      return;
     }
     div.className = "card compact";
     div.id = "card-" + r.id;
+    div.dataset.idx = idx;
+    div.dataset.expk = r.expK.toFixed(2);
+    div.dataset.form = "";
     // compact rung chips: 5+ through 9+
     const chips = RUNGS.filter(x => x >= 5).map((rung) => {
       const p = r.rungProbs[RUNGS.indexOf(rung)];
@@ -436,7 +451,7 @@ function render(data) {
       d.style.display = d.style.display === "none" ? "block" : "none";
     });
     cards.appendChild(div);
-  }
+  });
   autoStatcast(data.results.filter(r => !r.error));
 }
 
@@ -477,6 +492,9 @@ function renderScPanel(pid, sc) {
     return;
   }
   const [vTxt, vCls, vWhy] = verdictFor(sc);
+  const formTier = vCls === "v-confirm" ? "hot" : vCls === "v-neutral" ? "avg" : "cold";
+  const card = $("card-" + pid);
+  if (card) card.dataset.form = formTier;
   if (badge) badge.innerHTML = `<span class="verdict ${vCls}">${vTxt}</span>`;
   const tvb = $("tv-" + pid);
   if (tvb) tvb.innerHTML = `<span class="verdict ${vCls}" style="font-size:9px;padding:1px 5px">${vTxt}</span>`;
@@ -493,6 +511,37 @@ function renderScPanel(pid, sc) {
   ).join(" · ");
   panel.innerHTML = `<span style="color:var(--dim)">${sc.pitches} pitches, last 3 starts</span>` +
     starts + (mix ? `<div class="pmix">${mix} <span style="opacity:.7">(whiff = per swing, Savant defn)</span></div>` : "");
+  applySortFilter();
+}
+
+function applySortFilter() {
+  const cards = $("cards");
+  if (!cards) return;
+  const sortby = $("sortby").value;
+  const show = $("showform").value;
+  const rank = { hot: 0, avg: 1, cold: 2, "": 3 }; // pending sorts last
+  const nodes = Array.from(cards.querySelectorAll(".card.compact"));
+
+  // filter
+  nodes.forEach(n => {
+    const f = n.dataset.form || "";
+    const hide = show !== "all" && f && f !== show;
+    n.style.display = hide ? "none" : "";
+  });
+
+  // sort
+  if (sortby === "form") {
+    nodes.sort((a, b) => {
+      const ra = rank[a.dataset.form || ""], rb = rank[b.dataset.form || ""];
+      if (ra !== rb) return ra - rb;
+      return (Number(b.dataset.expk) || 0) - (Number(a.dataset.expk) || 0);
+    });
+    nodes.forEach(n => cards.appendChild(n));
+  } else {
+    // projected K (original order preserved via data-idx)
+    nodes.sort((a, b) => (Number(a.dataset.idx) || 0) - (Number(b.dataset.idx) || 0));
+    nodes.forEach(n => cards.appendChild(n));
+  }
 }
 
 async function autoStatcast(list) {
@@ -537,6 +586,8 @@ async function run() {
 
 $("date").value = new Date().toISOString().slice(0,10);
 $("run").addEventListener("click", run);
+$("sortby").addEventListener("change", applySortFilter);
+$("showform").addEventListener("change", applySortFilter);
 $("wtinfo").addEventListener("click", () => {
   const n = $("wtnote");
   n.style.display = n.style.display === "none" ? "block" : "none";

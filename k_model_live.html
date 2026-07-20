@@ -300,41 +300,39 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
   const startStr = start.toISOString().slice(0,10);
 
   const entries = [];
-  // fetch confirmed lineups from each game's boxscore (has battingOrder + batSide)
-  setStatus("Checking posted lineups…");
-  const luByGameSide = {};
-  await Promise.allSettled(games.map(async (g) => {
-    try {
-      const box = await j(`${API}/game/${g.gamePk}/boxscore`);
-      for (const sd of ["away","home"]) {
-        const tm = box.teams?.[sd];
-        const order = tm?.battingOrder ?? [];
-        let lhb=0, rhb=0, sw=0;
-        for (const pid of order) {
-          const pl = tm.players?.[`ID${pid}`];
-          const code = pl?.person?.batSide?.code;
-          if (code === "L") lhb++; else if (code === "S") sw++; else if (code === "R") rhb++;
-        }
-        luByGameSide[`${g.gamePk}-${sd}`] = { lhb, rhb, sw, posted: order.length >= 8 };
-      }
-    } catch(_) {}
-  }));
-
   for (const g of games) for (const side of ["away","home"]) {
     const pp = g.teams[side].probablePitcher;
     if (!pp) continue;
     const oppSide = side==="away"?"home":"away";
-    const lu = luByGameSide[`${g.gamePk}-${oppSide}`] ?? { lhb:0, rhb:0, sw:0, posted:false };
     entries.push({
-      id: pp.id, name: pp.fullName,
+      id: pp.id, name: pp.fullName, gamePk: g.gamePk,
       teamAbbr: abbr(g.teams[side].team),
       oppAbbr: abbr(g.teams[oppSide].team),
       opp: g.teams[oppSide].team,
+      oppSide,
       oppTeamId: g.teams[oppSide].team.id,
       homeTeamId: g.teams.home.team.id,
-      luPosted: lu.posted, lhb: lu.lhb, rhb: lu.rhb, switch_: lu.sw,
+      luPosted: false, lhb: 0, rhb: 0, switch_: 0,
     });
   }
+
+  // fetch confirmed lineups per game (non-blocking; failures leave luPosted=false)
+  setStatus("Checking posted lineups…");
+  await Promise.allSettled(entries.map(async (e) => {
+    if (!e.gamePk) return;
+    try {
+      const box = await j(`${API}/game/${e.gamePk}/boxscore`);
+      const tm = box.teams?.[e.oppSide];
+      const order = tm?.battingOrder ?? [];
+      if (order.length < 8) return;
+      let lhb=0, rhb=0, sw=0;
+      for (const pid of order) {
+        const code = tm.players?.[`ID${pid}`]?.person?.batSide?.code;
+        if (code === "L") lhb++; else if (code === "S") sw++; else rhb++;
+      }
+      e.luPosted = true; e.lhb = lhb; e.rhb = rhb; e.switch_ = sw;
+    } catch(_) {}
+  }));
 
   const results = [];
   const splitCache = {};
@@ -385,22 +383,24 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
 
       const park = (PARK_K[e.homeTeamId] ?? 100)/100;
       let adjK = Math.min(0.6, Math.max(0.02, oddsRatioK(pk, ok, lgK)*park));
+      const baseAdjK = adjK;
 
-      // ---- platoon adjustment: pitcher's vL/vR split vs today's lineup handedness ----
+      // ---- platoon adjustment (fully isolated; never zeroes the base projection) ----
       let platoonMult = 1, lhbShare = null, splitGap = null;
-      if (pkVL != null && pkVR != null && pk > 0) {
-        // switch hitters bat opposite the pitcher's hand: vs RHP -> bat L
-        const effLhb = e.luPosted ? (e.lhb + e.switch_) : null;
-        const effRhb = e.luPosted ? e.rhb : null;
-        // lineup lefty share; fallback ~0.40 league-ish when not posted
-        lhbShare = e.luPosted ? effLhb / (effLhb + effRhb) : 0.40;
-        // expected K% given this lineup mix vs the pitcher's splits
-        const lineupK = lhbShare * pkVL + (1 - lhbShare) * pkVR;
-        platoonMult = lineupK / pk;            // >1 favorable mix, <1 tough (e.g. lefty-heavy vs reverse-split RHP)
-        platoonMult = Math.min(1.25, Math.max(0.80, platoonMult));
-        splitGap = pkVR - pkVL;                // + = tougher on lefties (normal); - = reverse split
-        adjK = Math.min(0.6, Math.max(0.02, adjK * platoonMult));
-      }
+      try {
+        if (pkVL != null && pkVR != null && pk > 0 && isFinite(pkVL) && isFinite(pkVR)) {
+          lhbShare = (e.luPosted && (e.lhb + e.switch_ + e.rhb) > 0)
+            ? (e.lhb + e.switch_) / (e.lhb + e.switch_ + e.rhb)
+            : 0.40;
+          const lineupK = lhbShare * pkVL + (1 - lhbShare) * pkVR;
+          if (isFinite(lineupK) && lineupK > 0) {
+            platoonMult = Math.min(1.25, Math.max(0.80, lineupK / pk));
+            splitGap = pkVR - pkVL;
+            const adjusted = baseAdjK * platoonMult;
+            if (isFinite(adjusted) && adjusted > 0) adjK = Math.min(0.6, Math.max(0.02, adjusted));
+          }
+        }
+      } catch(_) { adjK = baseAdjK; platoonMult = 1; }
 
       const sim = simulate(adjK, bfMean);
       let oppK = [];

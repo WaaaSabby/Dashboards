@@ -171,11 +171,11 @@ function kpct(stat) {
   return pa>0 ? so/pa : null;
 }
 
-// ---------- Opponent K history: last starts vs today's opponent ----------
+// ---------- Opponent K history: recent starts vs today's opponent ----------
 async function oppKHistory(pitcherId, oppTeamId, season) {
   const out = [];
-  // pull current + prior two seasons of game logs, filter to this opponent
-  for (const yr of [season, String(+season-1), String(+season-2)]) {
+  // pull current + prior three seasons, collect ALL meetings, then take most recent
+  for (const yr of [season, String(+season-1), String(+season-2), String(+season-3)]) {
     try {
       const log = await j(`${API}/people/${pitcherId}/stats?stats=gameLog&group=pitching&season=${yr}`);
       for (const s of (log.stats?.[0]?.splits ?? [])) {
@@ -185,10 +185,10 @@ async function oppKHistory(pitcherId, oppTeamId, season) {
           ip: s.stat?.inningsPitched ?? "" });
       }
     } catch {}
-    if (out.length >= 5) break;
+    if (out.length >= 8) break; // enough to guarantee a clean most-recent 5
   }
-  out.sort((a,b) => b.date.localeCompare(a.date));
-  return out.slice(0, 5);
+  out.sort((a,b) => b.date.localeCompare(a.date)); // newest first
+  return out.slice(0, 5); // most recent 5 meetings
 }
 
 // ---------- Statcast layer: pitch-level SwStr / CSW from official feeds ----------
@@ -445,12 +445,17 @@ const SC_CACHE = {};
 function oppKLine(r) {
   if (!r.oppK || !r.oppK.length)
     return `<span style="color:var(--dim)">vs ${r.oppAbbr}: no prior starts</span>`;
-  const ks = r.oppK.map(g => g.k);
-  const avg = ks.reduce((a,b)=>a+b,0)/ks.length;
-  const hot = avg>=6 ? "var(--teal)" : avg>=4 ? "var(--purple)" : "var(--dim)";
-  return `<span style="color:var(--dim)">vs ${r.oppAbbr} last ${ks.length}: </span>` +
-    `<span style="color:${hot};font-weight:700">${ks.join("·")}K</span>` +
-    `<span style="color:var(--dim)"> (avg ${avg.toFixed(1)})</span>`;
+  const ks = r.oppK.map(g => g.k);              // newest first, up to 5
+  const l3 = ks.slice(0, 3), l5 = ks.slice(0, 5);
+  const avg = a => a.reduce((x,y)=>x+y,0)/a.length;
+  const col = v => v>=6 ? "var(--teal)" : v>=4 ? "var(--purple)" : "var(--dim)";
+  const l3avg = avg(l3), l5avg = avg(l5);
+  const l3str = `<span style="color:${col(l3avg)};font-weight:700">L${l3.length} ${l3.join("·")}K</span>` +
+    `<span style="color:var(--dim)"> (${l3avg.toFixed(1)})</span>`;
+  const l5str = l5.length > 3
+    ? ` <span style="color:var(--dim)">| L${l5.length} ${l5.join("·")}K (${l5avg.toFixed(1)})</span>`
+    : "";
+  return `<span style="color:var(--dim)">vs ${r.oppAbbr}: </span>${l3str}${l5str}`;
 }
 
 function oppKDetail(r) {

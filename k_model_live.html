@@ -318,19 +318,40 @@ async function fetchSlate(dateStr, recencyWt, setStatus) {
 
   // fetch confirmed lineups per game (non-blocking; failures leave luPosted=false)
   setStatus("Checking posted lineups…");
+  const batSideCache = {};
+  async function batSideOf(pid) {
+    if (pid in batSideCache) return batSideCache[pid];
+    try {
+      const pr = await j(`${API}/people/${pid}`);
+      batSideCache[pid] = pr.people?.[0]?.batSide?.code ?? null;
+    } catch { batSideCache[pid] = null; }
+    return batSideCache[pid];
+  }
   await Promise.allSettled(entries.map(async (e) => {
     if (!e.gamePk) return;
     try {
       const box = await j(`${API}/game/${e.gamePk}/boxscore`);
       const tm = box.teams?.[e.oppSide];
-      const order = tm?.battingOrder ?? [];
-      if (order.length < 8) return;
-      let lhb=0, rhb=0, sw=0;
-      for (const pid of order) {
-        const code = tm.players?.[`ID${pid}`]?.person?.batSide?.code;
-        if (code === "L") lhb++; else if (code === "S") sw++; else rhb++;
+      let order = tm?.battingOrder ?? [];
+      // fallback: derive order from players map if battingOrder empty
+      if (order.length < 8 && tm?.players) {
+        order = Object.values(tm.players)
+          .filter(p => p.battingOrder)
+          .sort((a,b) => Number(a.battingOrder) - Number(b.battingOrder))
+          .map(p => p.person?.id)
+          .filter(Boolean);
       }
-      e.luPosted = true; e.lhb = lhb; e.rhb = rhb; e.switch_ = sw;
+      if (order.length < 8) return; // lineup not posted yet
+      let lhb=0, rhb=0, sw=0, resolved=0;
+      for (const pid of order.slice(0, 9)) {
+        // try boxscore stub first, then authoritative people lookup
+        const stub = tm.players?.[`ID${pid}`]?.person?.batSide?.code;
+        const code = stub ?? await batSideOf(pid);
+        if (code === "L") { lhb++; resolved++; }
+        else if (code === "S") { sw++; resolved++; }
+        else if (code === "R") { rhb++; resolved++; }
+      }
+      if (resolved >= 8) { e.luPosted = true; e.lhb = lhb; e.rhb = rhb; e.switch_ = sw; }
     } catch(_) {}
   }));
 
@@ -528,7 +549,7 @@ function platoonLine(r) {
   // shown as context even when not below the absolute weak threshold
   const lean = r.pkVL < r.pkVR - GAP ? "LHB" : r.pkVR < r.pkVL - GAP ? "RHB" : null;
   const reverse = (r.hand === "R" && lean === "RHB") || (r.hand === "L" && lean === "LHB");
-  const mix = r.luPosted
+  const mix = (r.luPosted && (r.lhb + r.rhb + r.switch_) >= 8)
     ? `${r.lhb}L/${r.rhb}R${r.switch_?`/${r.switch_}S`:""}`
     : `~${Math.round((r.lhbShare??0.4)*100)}% L (proj)`;
   const m = r.platoonMult ?? 1;

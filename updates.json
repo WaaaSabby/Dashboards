@@ -10,9 +10,15 @@
     "archive": []
   },
   "nfl": {
-    "updated": null,
-    "slate": null,
-    "archive": []
+    "updated": "2026-10-17T11:22:06-04:00",
+    "slate": "Week 6 \u00b7 Sunday slate",
+    "archive": [
+      {
+        "date": "2026-10-17",
+        "slate": "Week 6 \u00b7 Sunday slate",
+        "file": "nfl/archive/2026-10-17.html"
+      }
+    ]
   },
   "cfb": {
     "updated": null,

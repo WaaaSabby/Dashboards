@@ -5,13 +5,13 @@ Usage: python3 tools/publish.py <sport> <dashboard.html> "<slate label>" [YYYY-M
 
 - Copies the dashboard to <sport>/index.html (the permanent link friends bookmark)
 - Keeps a dated copy at <sport>/archive/<date>.html
-- Adds a small "All dashboards" link at the top of both copies
+- Adds a small "All dashboards" link and the Bet365 disclaimer at the top of both copies
 - Updates updates.json (last-updated time, slate label, archive list)
 """
 import json, sys, datetime, pathlib
 from zoneinfo import ZoneInfo
 
-SPORTS = ["mlb", "nhl", "nfl", "cfb", "nba", "wnba"]
+SPORTS = ["mlb", "nhl", "nfl", "cfb", "nba", "wnba", "soccer"]
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TZ = ZoneInfo("America/Toronto")
 
@@ -20,14 +20,30 @@ NAV = ('<div id="sd-nav" style="background:#0b0912;border-bottom:1px solid #2c22
        '<a href="{href}" style="color:#a970ff;text-decoration:none">&larr; All dashboards</a></div>')
 
 
+NOTE = ('<div id="sd-note" style="background:#2a2208;border-bottom:1px solid #5c4a12;color:#f5d36b;'
+        'padding:7px 16px;font:600 12.5px system-ui,-apple-system,Segoe UI,Roboto,sans-serif">'
+        '&#9888; Bet365 odds aren\'t in this feed. Check your parlays on Bet365 too, in case it pays more.</div>')
+
+
+def add_note(html):
+    """Bet365 disclaimer under the nav bar, on every dashboard."""
+    if 'id="sd-note"' in html:
+        return html
+    i = html.find('id="sd-nav"')
+    if i == -1:
+        return html
+    j = html.find("</div>", i) + len("</div>")
+    return html[:j] + NOTE + html[j:]
+
+
 def add_nav(html, href):
     if 'id="sd-nav"' in html:
-        return html
+        return add_note(html)
     i = html.lower().find("<body")
     if i == -1:
-        return NAV.format(href=href) + html
+        return add_note(NAV.format(href=href) + html)
     j = html.find(">", i) + 1
-    return html[:j] + NAV.format(href=href) + html[j:]
+    return add_note(html[:j] + NAV.format(href=href) + html[j:])
 
 
 def main():

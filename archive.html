@@ -26,7 +26,7 @@ a.row:hover{border-color:var(--p)}
 <div id="list"></div>
 </div>
 <script>
-var NAMES={mlb:"MLB",nhl:"NHL",nfl:"NFL",cfb:"CFB",nba:"NBA",wnba:"WNBA"};
+var NAMES={mlb:"MLB",nhl:"NHL",nfl:"NFL",cfb:"CFB",nba:"NBA",wnba:"WNBA",soccer:"Soccer"};
 var k=(new URLSearchParams(location.search).get("s")||"").toLowerCase();
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 if(NAMES[k]){document.getElementById("h").innerHTML='<span>'+NAMES[k]+'</span> past slates';document.title=NAMES[k]+" Past Slates"}

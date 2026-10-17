@@ -46,5 +46,16 @@
     "updated": null,
     "slate": null,
     "archive": []
+  },
+  "soccer": {
+    "updated": "2026-10-17T16:46:41-04:00",
+    "slate": "Sat Oct 17 \u00b7 MLS \u00b7 12 games",
+    "archive": [
+      {
+        "date": "2026-10-17",
+        "slate": "Sat Oct 17 \u00b7 MLS \u00b7 12 games",
+        "file": "soccer/archive/2026-10-17.html"
+      }
+    ]
   }
 }

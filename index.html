@@ -26,9 +26,15 @@ header p{margin:4px 0 0;color:var(--m);font-size:13px}
 .when{color:var(--m);font-size:12px;margin-top:2px;min-height:18px}
 .foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--m)}
 .foot a{color:var(--p);text-decoration:none;font-weight:600}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--m);margin:36px 0 10px}
-.tools a{display:inline-block;margin:0 8px 8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;color:var(--t);text-decoration:none;background:var(--panel);font-size:14px}
-.tools a:hover{border-color:var(--p)}
+.strip{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.strip .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--m);margin:0 0 8px 2px}
+.strip .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.chip{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);text-decoration:none;color:var(--t);font-size:13px}
+a.chip:hover{border-color:var(--p)}
+.chip b{color:var(--p);letter-spacing:.5px}
+.chip span{color:var(--m);font-size:12px;white-space:nowrap}
+.chip.fresh span{color:var(--live);font-weight:600}
+.chip.none{opacity:.5}
 </style>
 </head>
 <body>
@@ -37,12 +43,8 @@ h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--m);m
 <h1>Sabby's <span>Dashboards</span></h1>
 <p>Tap a sport for the latest slate. Pages update in place, so bookmark this one.</p>
 </header>
+<div class="strip" id="strip"></div>
 <div class="grid" id="grid"></div>
-<h2>Tools</h2>
-<div class="tools">
-<a href="k_model_live.html">K Model (live)</a>
-<a href="rbi_goose_live.html">RBI / Goose (live)</a>
-</div>
 </div>
 <script>
 var SPORTS=[["mlb","MLB","Baseball"],["nhl","NHL","Hockey"],["nfl","NFL","Football"],["cfb","CFB","College football"],["nba","NBA","Basketball"],["wnba","WNBA","Basketball"]];
@@ -64,6 +66,16 @@ function render(data){
     html+='<div class="tile '+cls+'">'+main+foot+'</div>';
   });
   g.innerHTML=html;
+  var chips="";
+  SPORTS.forEach(function(s){
+    var k=s[0],info=(data&&data[k])||{},up=info.updated?new Date(info.updated):null,when,cls;
+    if(!up){when="Not posted";cls="none"}
+    else if(dayKey(up)===today){when="Today "+up.toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"});cls="fresh"}
+    else{when=up.toLocaleDateString("en-US",{timeZone:TZ,month:"short",day:"numeric"})+" "+up.toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"});cls=""}
+    var inner='<b>'+s[1]+'</b><span>'+when+'</span>';
+    chips+=up?'<a class="chip '+cls+'" href="'+k+'/?v='+up.getTime()+'">'+inner+'</a>':'<div class="chip '+cls+'">'+inner+'</div>';
+  });
+  document.getElementById("strip").innerHTML='<div class="lbl">Last updated (ET)</div><div class="row">'+chips+'</div>';
 }
 fetch("updates.json?t="+Date.now()).then(function(r){return r.json()}).catch(function(){return {}}).then(render);
 </script>

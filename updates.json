@@ -5,9 +5,15 @@
     "archive": []
   },
   "nhl": {
-    "updated": null,
-    "slate": null,
-    "archive": []
+    "updated": "2026-10-17T11:24:19-04:00",
+    "slate": "Sat Oct 17 \u00b7 14 games",
+    "archive": [
+      {
+        "date": "2026-10-17",
+        "slate": "Sat Oct 17 \u00b7 14 games",
+        "file": "nhl/archive/2026-10-17.html"
+      }
+    ]
   },
   "nfl": {
     "updated": "2026-10-17T11:22:06-04:00",
@@ -21,9 +27,15 @@
     ]
   },
   "cfb": {
-    "updated": null,
-    "slate": null,
-    "archive": []
+    "updated": "2026-10-17T11:24:19-04:00",
+    "slate": "Oct 16\u201317 \u00b7 Fri night + Saturday",
+    "archive": [
+      {
+        "date": "2026-10-17",
+        "slate": "Oct 16\u201317 \u00b7 Fri night + Saturday",
+        "file": "cfb/archive/2026-10-17.html"
+      }
+    ]
   },
   "nba": {
     "updated": null,

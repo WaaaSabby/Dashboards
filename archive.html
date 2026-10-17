@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Past Slates</title>
+<style>
+:root{--bg:#0b0912;--panel:#151022;--line:#2c2244;--p:#a970ff;--t:#ece8f5;--m:#9a90b3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+.back{color:var(--p);text-decoration:none;font-size:13px;font-weight:600}
+h1{margin:12px 0 18px;font-size:24px}
+h1 span{color:var(--p)}
+a.row{display:flex;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:inherit;text-decoration:none}
+a.row:hover{border-color:var(--p)}
+.d{font-weight:700}
+.s{color:var(--m);font-size:13px;text-align:right}
+.empty{color:var(--m)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="./">&larr; All dashboards</a>
+<h1 id="h">Past slates</h1>
+<div id="list"></div>
+</div>
+<script>
+var NAMES={mlb:"MLB",nhl:"NHL",nfl:"NFL",cfb:"CFB",nba:"NBA",wnba:"WNBA"};
+var k=(new URLSearchParams(location.search).get("s")||"").toLowerCase();
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+if(NAMES[k]){document.getElementById("h").innerHTML='<span>'+NAMES[k]+'</span> past slates';document.title=NAMES[k]+" Past Slates"}
+fetch("updates.json?t="+Date.now()).then(function(r){return r.json()}).catch(function(){return {}}).then(function(d){
+  var a=((d[k]||{}).archive||[]).slice().sort(function(x,y){return x.date<y.date?1:-1});
+  var el=document.getElementById("list");
+  if(!a.length){el.innerHTML='<p class="empty">Nothing archived yet.</p>';return}
+  el.innerHTML=a.map(function(e){
+    var dt=new Date(e.date+"T12:00:00");
+    var label=dt.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+    return '<a class="row" href="'+esc(e.file)+'"><span class="d">'+label+'</span><span class="s">'+esc(e.slate||"")+'</span></a>';
+  }).join("");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "mlb": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  },
+  "nhl": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  },
+  "nfl": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  },
+  "cfb": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  },
+  "nba": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  },
+  "wnba": {
+    "updated": null,
+    "slate": null,
+    "archive": []
+  }
+}

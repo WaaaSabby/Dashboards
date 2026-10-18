@@ -16,9 +16,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-10-17T12:02:37-04:00",
-    "slate": "Week 6 \u00b7 Sunday slate",
+    "updated": "2026-10-18T09:41:18-04:00",
+    "slate": "Week 6 \u00b7 Sunday slate (refreshed 10a)",
     "archive": [
+      {
+        "date": "2026-10-18",
+        "slate": "Week 6 \u00b7 Sunday slate (refreshed 10a)",
+        "file": "nfl/archive/2026-10-18.html"
+      },
       {
         "date": "2026-10-17",
         "slate": "Week 6 \u00b7 Sunday slate",

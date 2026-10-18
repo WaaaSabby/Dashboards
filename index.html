@@ -52,9 +52,20 @@ var TZ="America/Toronto";
 function dayKey(d){return d.toLocaleDateString("en-CA",{timeZone:TZ})}
 function fmt(d){return d.toLocaleDateString("en-US",{timeZone:TZ,weekday:"short",month:"short",day:"numeric"})+" · "+d.toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"})+" ET"}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var STALE_DAYS=21;
+function shown(data){
+  var cut=Date.now()-STALE_DAYS*864e5;
+  return SPORTS.filter(function(s){
+    var info=(data&&data[s[0]])||{};
+    if(info.hidden) return false;
+    if(!info.updated) return false;
+    return new Date(info.updated).getTime()>=cut;
+  });
+}
 function render(data){
-  var g=document.getElementById("grid"),html="",today=dayKey(new Date());
-  SPORTS.forEach(function(s){
+  var g=document.getElementById("grid"),html="",today=dayKey(new Date()),LIST=shown(data);
+  if(!LIST.length){g.innerHTML='<p style="color:var(--m)">No dashboards posted right now.</p>';document.getElementById("strip").style.display="none";return}
+  LIST.forEach(function(s){
     var k=s[0],info=(data&&data[k])||{},up=info.updated?new Date(info.updated):null;
     var n=(info.archive||[]).length,badge,cls;
     if(!up){badge='<span class="badge">Not posted</span>';cls="off"}
@@ -67,7 +78,7 @@ function render(data){
   });
   g.innerHTML=html;
   var chips="";
-  SPORTS.forEach(function(s){
+  LIST.forEach(function(s){
     var k=s[0],info=(data&&data[k])||{},up=info.updated?new Date(info.updated):null,when,cls;
     if(!up){when="Not posted";cls="none"}
     else if(dayKey(up)===today){when="Today "+up.toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"});cls="fresh"}

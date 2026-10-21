@@ -43,9 +43,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-10-19T10:15:00-04:00",
-    "slate": "Tue Oct 20 \u00b7 Opening night \u00b7 3 games (refreshed Mon)",
+    "updated": "2026-10-21T13:40:00-04:00",
+    "slate": "Wed Oct 21 \u00b7 11 games",
     "archive": [
+      {
+        "date": "2026-10-21",
+        "slate": "Wed Oct 21 \u00b7 11 games",
+        "file": "nba/archive/2026-10-21.html"
+      },
       {
         "date": "2026-10-20",
         "slate": "Tue Oct 20 \u00b7 Opening night \u00b7 3 games (refreshed Mon)",

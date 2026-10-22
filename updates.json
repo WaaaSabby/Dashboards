@@ -42,9 +42,14 @@
     ]
   },
   "cfb": {
-    "updated": "2026-10-17T15:59:40-04:00",
-    "slate": "Sat Oct 17 \u00b7 late slate (after 3:30)",
+    "updated": "2026-10-22T17:40:00-04:00",
+    "slate": "Week 9 \u00b7 Thu Oct 22 \u2013 Sat Oct 24 \u00b7 50 games",
     "archive": [
+      {
+        "date": "2026-10-22",
+        "slate": "Week 9 \u00b7 Thu Oct 22 \u2013 Sat Oct 24 \u00b7 50 games",
+        "file": "cfb/archive/2026-10-22.html"
+      },
       {
         "date": "2026-10-17",
         "slate": "Sat Oct 17 \u00b7 late slate (after 3:30)",

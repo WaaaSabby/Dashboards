@@ -53,9 +53,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-10-21T14:30:00-04:00",
-    "slate": "Wed Oct 21 \u00b7 11 games (updated 2:30p)",
+    "updated": "2026-10-22T16:30:00-04:00",
+    "slate": "Thu Oct 22 \u00b7 2 games",
     "archive": [
+      {
+        "date": "2026-10-22",
+        "slate": "Thu Oct 22 \u00b7 2 games",
+        "file": "nba/archive/2026-10-22.html"
+      },
       {
         "date": "2026-10-21",
         "slate": "Wed Oct 21 \u00b7 11 games (updated 2:30p)",

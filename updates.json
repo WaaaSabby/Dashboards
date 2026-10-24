@@ -42,9 +42,14 @@
     ]
   },
   "cfb": {
-    "updated": "2026-10-22T17:40:00-04:00",
-    "slate": "Week 9 \u00b7 Thu Oct 22 \u2013 Sat Oct 24 \u00b7 50 games",
+    "updated": "2026-10-24T11:00:00-04:00",
+    "slate": "Sat Oct 24 \u00b7 Saturday refresh \u00b7 7 prop games + spreads",
     "archive": [
+      {
+        "date": "2026-10-24",
+        "slate": "Sat Oct 24 \u00b7 Saturday refresh \u00b7 7 prop games + spreads",
+        "file": "cfb/archive/2026-10-24.html"
+      },
       {
         "date": "2026-10-22",
         "slate": "Week 9 \u00b7 Thu Oct 22 \u2013 Sat Oct 24 \u00b7 50 games",

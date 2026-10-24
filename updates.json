@@ -58,9 +58,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-10-23T21:32:22-04:00",
-    "slate": "Fri Oct 23 \u00b7 12 games (Top 5 Threes added 4:35p)",
+    "updated": "2026-10-24T10:14:25-04:00",
+    "slate": "Sat Oct 24 \u00b7 8 games",
     "archive": [
+      {
+        "date": "2026-10-24",
+        "slate": "Sat Oct 24 \u00b7 8 games",
+        "file": "nba/archive/2026-10-24.html"
+      },
       {
         "date": "2026-10-23",
         "slate": "Fri Oct 23 \u00b7 12 games (Top 5 Threes added 4:35p)",

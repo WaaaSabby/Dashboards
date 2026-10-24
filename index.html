@@ -60,6 +60,8 @@ function shown(data){
     if(info.hidden) return false;
     if(!info.updated) return false;
     return new Date(info.updated).getTime()>=cut;
+  }).sort(function(a,b){
+    return new Date(data[b[0]].updated).getTime()-new Date(data[a[0]].updated).getTime();
   });
 }
 function render(data){

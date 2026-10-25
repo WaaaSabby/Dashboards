@@ -21,9 +21,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-10-22T14:30:00-04:00",
-    "slate": "Week 7 \u00b7 TNF NE @ CHI",
+    "updated": "2026-10-25T10:30:00-04:00",
+    "slate": "Week 7 \u00b7 Sunday slate \u00b7 11 games",
     "archive": [
+      {
+        "date": "2026-10-25",
+        "slate": "Week 7 \u00b7 Sunday slate \u00b7 11 games",
+        "file": "nfl/archive/2026-10-25.html"
+      },
       {
         "date": "2026-10-22",
         "slate": "Week 7 \u00b7 TNF NE @ CHI",

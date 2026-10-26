@@ -68,9 +68,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-10-25T09:45:00-04:00",
-    "slate": "Sun Oct 25 \u00b7 7 games (Boozer/Siakam/Kessler assists added 9:45a)",
+    "updated": "2026-10-26T13:50:27-04:00",
+    "slate": "Mon Oct 26 \u00b7 9 games",
     "archive": [
+      {
+        "date": "2026-10-26",
+        "slate": "Mon Oct 26 \u00b7 9 games",
+        "file": "nba/archive/2026-10-26.html"
+      },
       {
         "date": "2026-10-25",
         "slate": "Sun Oct 25 \u00b7 7 games (Boozer/Siakam/Kessler assists added 9:45a)",

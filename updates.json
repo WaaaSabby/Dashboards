@@ -21,9 +21,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-10-25T15:45:00-04:00",
-    "slate": "Week 7 \u00b7 Sunday slate \u00b7 11 games (non-starter tickets added 3:45p)",
+    "updated": "2026-10-26T15:01:17-04:00",
+    "slate": "Week 7 \u00b7 MNF DAL @ PHI",
     "archive": [
+      {
+        "date": "2026-10-26",
+        "slate": "Week 7 \u00b7 MNF DAL @ PHI",
+        "file": "nfl/archive/2026-10-26.html"
+      },
       {
         "date": "2026-10-25",
         "slate": "Week 7 \u00b7 Sunday slate \u00b7 11 games (non-starter tickets added 3:45p)",

@@ -21,9 +21,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-10-26T15:01:17-04:00",
-    "slate": "Week 7 \u00b7 MNF DAL @ PHI",
+    "updated": "2026-10-29T11:05:00-04:00",
+    "slate": "Week 8 \u00b7 TNF CAR @ GB",
     "archive": [
+      {
+        "date": "2026-10-29",
+        "slate": "Week 8 \u00b7 TNF CAR @ GB",
+        "file": "nfl/archive/2026-10-29.html"
+      },
       {
         "date": "2026-10-26",
         "slate": "Week 7 \u00b7 MNF DAL @ PHI",

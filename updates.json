@@ -6,139 +6,144 @@
   },
   "nhl": {
     "updated": "2026-10-22T10:30:16-04:00",
-    "slate": "Thu Oct 22 · 12 games",
+    "slate": "Thu Oct 22 \u00b7 12 games",
     "archive": [
       {
         "date": "2026-10-22",
-        "slate": "Thu Oct 22 · 12 games",
+        "slate": "Thu Oct 22 \u00b7 12 games",
         "file": "nhl/archive/2026-10-22.html"
       },
       {
         "date": "2026-10-17",
-        "slate": "Sat Oct 17 · late slate (6 PM+) · 11 games",
+        "slate": "Sat Oct 17 \u00b7 late slate (6 PM+) \u00b7 11 games",
         "file": "nhl/archive/2026-10-17.html"
       }
     ]
   },
   "nfl": {
     "updated": "2026-10-29T19:10:00-04:00",
-    "slate": "Week 8 · TNF CAR @ GB (inactives 7:10p)",
+    "slate": "Week 8 \u00b7 TNF CAR @ GB (inactives 7:10p)",
     "archive": [
       {
         "date": "2026-10-29",
-        "slate": "Week 8 · TNF CAR @ GB (inactives 7:10p)",
+        "slate": "Week 8 \u00b7 TNF CAR @ GB (inactives 7:10p)",
         "file": "nfl/archive/2026-10-29.html"
       },
       {
         "date": "2026-10-26",
-        "slate": "Week 7 · MNF DAL @ PHI",
+        "slate": "Week 7 \u00b7 MNF DAL @ PHI",
         "file": "nfl/archive/2026-10-26.html"
       },
       {
         "date": "2026-10-25",
-        "slate": "Week 7 · Sunday slate · 11 games (non-starter tickets added 3:45p)",
+        "slate": "Week 7 \u00b7 Sunday slate \u00b7 11 games (non-starter tickets added 3:45p)",
         "file": "nfl/archive/2026-10-25.html"
       },
       {
         "date": "2026-10-22",
-        "slate": "Week 7 · TNF NE @ CHI",
+        "slate": "Week 7 \u00b7 TNF NE @ CHI",
         "file": "nfl/archive/2026-10-22.html"
       },
       {
         "date": "2026-10-18",
-        "slate": "Week 6 · Sunday slate (refreshed 10a)",
+        "slate": "Week 6 \u00b7 Sunday slate (refreshed 10a)",
         "file": "nfl/archive/2026-10-18.html"
       },
       {
         "date": "2026-10-17",
-        "slate": "Week 6 · Sunday slate",
+        "slate": "Week 6 \u00b7 Sunday slate",
         "file": "nfl/archive/2026-10-17.html"
       }
     ]
   },
   "cfb": {
     "updated": "2026-10-29T15:45:59-04:00",
-    "slate": "Week 9 · Sat Oct 31 slate · built Thu (Sasser spreads + alt 7-leg)",
+    "slate": "Week 9 \u00b7 Sat Oct 31 slate \u00b7 built Thu (Sasser spreads + alt 7-leg)",
     "archive": [
       {
         "date": "2026-10-29",
-        "slate": "Week 9 · Sat Oct 31 slate · built Thu (Sasser spreads + alt 7-leg)",
+        "slate": "Week 9 \u00b7 Sat Oct 31 slate \u00b7 built Thu (Sasser spreads + alt 7-leg)",
         "file": "cfb/archive/2026-10-29.html"
       },
       {
         "date": "2026-10-24",
-        "slate": "Sat Oct 24 · Saturday refresh · 7 prop games + spreads",
+        "slate": "Sat Oct 24 \u00b7 Saturday refresh \u00b7 7 prop games + spreads",
         "file": "cfb/archive/2026-10-24.html"
       },
       {
         "date": "2026-10-22",
-        "slate": "Week 9 · Thu Oct 22 – Sat Oct 24 · 50 games",
+        "slate": "Week 9 \u00b7 Thu Oct 22 \u2013 Sat Oct 24 \u00b7 50 games",
         "file": "cfb/archive/2026-10-22.html"
       },
       {
         "date": "2026-10-17",
-        "slate": "Sat Oct 17 · late slate (after 3:30)",
+        "slate": "Sat Oct 17 \u00b7 late slate (after 3:30)",
         "file": "cfb/archive/2026-10-17.html"
       }
     ]
   },
   "nba": {
-    "updated": "2026-10-30T09:58:00-04:00",
-    "slate": "Fri Oct 30 · 10 games (NBA Cup opener · Max tab repriced 9:55a)",
+    "updated": "2026-10-31T10:58:42-04:00",
+    "slate": "Sat Oct 31 \u00b7 7 games",
     "archive": [
       {
+        "date": "2026-10-31",
+        "slate": "Sat Oct 31 \u00b7 7 games",
+        "file": "nba/archive/2026-10-31.html"
+      },
+      {
         "date": "2026-10-30",
-        "slate": "Fri Oct 30 · 10 games (NBA Cup opener · Max tab repriced 9:55a)",
+        "slate": "Fri Oct 30 \u00b7 10 games (NBA Cup opener \u00b7 Max tab repriced 9:55a)",
         "file": "nba/archive/2026-10-30.html"
       },
       {
         "date": "2026-10-29",
-        "slate": "Thu Oct 29 · 3 games",
+        "slate": "Thu Oct 29 \u00b7 3 games",
         "file": "nba/archive/2026-10-29.html"
       },
       {
         "date": "2026-10-28",
-        "slate": "Wed Oct 28 · 12 games (Straights tab added, First Baskets removed)",
+        "slate": "Wed Oct 28 \u00b7 12 games (Straights tab added, First Baskets removed)",
         "file": "nba/archive/2026-10-28.html"
       },
       {
         "date": "2026-10-27",
-        "slate": "Tue Oct 27 · 4 games (updated 11:15)",
+        "slate": "Tue Oct 27 \u00b7 4 games (updated 11:15)",
         "file": "nba/archive/2026-10-27.html"
       },
       {
         "date": "2026-10-26",
-        "slate": "Mon Oct 26 · 9 games (Parlay 9 + MAX 1 swap, 2:10p)",
+        "slate": "Mon Oct 26 \u00b7 9 games (Parlay 9 + MAX 1 swap, 2:10p)",
         "file": "nba/archive/2026-10-26.html"
       },
       {
         "date": "2026-10-25",
-        "slate": "Sun Oct 25 · 7 games (Boozer/Siakam/Kessler assists added 9:45a)",
+        "slate": "Sun Oct 25 \u00b7 7 games (Boozer/Siakam/Kessler assists added 9:45a)",
         "file": "nba/archive/2026-10-25.html"
       },
       {
         "date": "2026-10-24",
-        "slate": "Sat Oct 24 · 8 games (Parlay 7 added 11a)",
+        "slate": "Sat Oct 24 \u00b7 8 games (Parlay 7 added 11a)",
         "file": "nba/archive/2026-10-24.html"
       },
       {
         "date": "2026-10-23",
-        "slate": "Fri Oct 23 · 12 games (Top 5 Threes added 4:35p)",
+        "slate": "Fri Oct 23 \u00b7 12 games (Top 5 Threes added 4:35p)",
         "file": "nba/archive/2026-10-23.html"
       },
       {
         "date": "2026-10-22",
-        "slate": "Thu Oct 22 · 2 games",
+        "slate": "Thu Oct 22 \u00b7 2 games",
         "file": "nba/archive/2026-10-22.html"
       },
       {
         "date": "2026-10-21",
-        "slate": "Wed Oct 21 · 11 games (updated 2:30p)",
+        "slate": "Wed Oct 21 \u00b7 11 games (updated 2:30p)",
         "file": "nba/archive/2026-10-21.html"
       },
       {
         "date": "2026-10-20",
-        "slate": "Tue Oct 20 · Opening night · 3 games (refreshed Mon)",
+        "slate": "Tue Oct 20 \u00b7 Opening night \u00b7 3 games (refreshed Mon)",
         "file": "nba/archive/2026-10-20.html"
       }
     ]
@@ -150,11 +155,11 @@
   },
   "soccer": {
     "updated": "2026-10-17T16:47:58-04:00",
-    "slate": "Sat Oct 17 · MLS · 12 games",
+    "slate": "Sat Oct 17 \u00b7 MLS \u00b7 12 games",
     "archive": [
       {
         "date": "2026-10-17",
-        "slate": "Sat Oct 17 · MLS · 12 games",
+        "slate": "Sat Oct 17 \u00b7 MLS \u00b7 12 games",
         "file": "soccer/archive/2026-10-17.html"
       }
     ]

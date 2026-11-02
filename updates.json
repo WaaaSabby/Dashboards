@@ -21,9 +21,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-11-01T08:38:22-05:00",
-    "slate": "Week 8 \u00b7 Sunday slate \u00b7 12 games",
+    "updated": "2026-11-02T11:45:00-05:00",
+    "slate": "Week 8 \u00b7 MNF CHI @ SEA",
     "archive": [
+      {
+        "date": "2026-11-02",
+        "slate": "Week 8 \u00b7 MNF CHI @ SEA",
+        "file": "nfl/archive/2026-11-02.html"
+      },
       {
         "date": "2026-11-01",
         "slate": "Week 8 \u00b7 Sunday slate \u00b7 12 games",

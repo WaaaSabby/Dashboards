@@ -185,9 +185,14 @@
     ]
   },
   "cbb": {
-    "updated": "2026-11-02T09:46:00-05:00",
-    "slate": "Mon Nov 2 \u00b7 Opening night \u00b7 5 spread tickets + props",
+    "updated": "2026-11-03T10:35:00-05:00",
+    "slate": "Tue Nov 3 \u00b7 19 games \u00b7 main-line 5s + mix + alt spreads",
     "archive": [
+      {
+        "date": "2026-11-03",
+        "slate": "Tue Nov 3 \u00b7 19 games \u00b7 main-line 5s + mix + alt spreads",
+        "file": "cbb/archive/2026-11-03.html"
+      },
       {
         "date": "2026-11-02",
         "slate": "Mon Nov 2 \u00b7 Opening night \u00b7 5 spread tickets + props",

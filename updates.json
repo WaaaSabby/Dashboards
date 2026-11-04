@@ -93,9 +93,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-11-02T12:14:51-05:00",
-    "slate": "Mon Nov 2 \u00b7 15 games",
+    "updated": "2026-11-04T09:29:42-05:00",
+    "slate": "Wed Nov 4 \u00b7 14 games",
     "archive": [
+      {
+        "date": "2026-11-04",
+        "slate": "Wed Nov 4 \u00b7 14 games",
+        "file": "nba/archive/2026-11-04.html"
+      },
       {
         "date": "2026-11-02",
         "slate": "Mon Nov 2 \u00b7 15 games",

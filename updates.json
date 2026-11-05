@@ -21,9 +21,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-11-02T11:45:00-05:00",
-    "slate": "Week 8 \u00b7 MNF CHI @ SEA",
+    "updated": "2026-11-05T10:10:00-05:00",
+    "slate": "Week 9 \u00b7 TNF JAX @ BAL",
     "archive": [
+      {
+        "date": "2026-11-05",
+        "slate": "Week 9 \u00b7 TNF JAX @ BAL",
+        "file": "nfl/archive/2026-11-05.html"
+      },
       {
         "date": "2026-11-02",
         "slate": "Week 8 \u00b7 MNF CHI @ SEA",

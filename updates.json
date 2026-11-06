@@ -103,9 +103,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-11-05T10:20:00-05:00",
-    "slate": "Thu Nov 5 \u00b7 2 games",
+    "updated": "2026-11-06T10:57:43-05:00",
+    "slate": "Fri Nov 6 \u00b7 9 games (new SGP tab)",
     "archive": [
+      {
+        "date": "2026-11-06",
+        "slate": "Fri Nov 6 \u00b7 9 games (new SGP tab)",
+        "file": "nba/archive/2026-11-06.html"
+      },
       {
         "date": "2026-11-05",
         "slate": "Thu Nov 5 \u00b7 2 games",

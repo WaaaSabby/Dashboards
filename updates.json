@@ -77,9 +77,14 @@
     ]
   },
   "cfb": {
-    "updated": "2026-10-29T15:45:59-04:00",
-    "slate": "Week 9 \u00b7 Sat Oct 31 slate \u00b7 built Thu (Sasser spreads + alt 7-leg)",
+    "updated": "2026-11-07T11:35:00-05:00",
+    "slate": "Week 10 \u00b7 Sat Nov 7 \u00b7 full slate (noon\u201310:30 PM) \u00b7 props + spreads, no Sasser",
     "archive": [
+      {
+        "date": "2026-11-07",
+        "slate": "Week 10 \u00b7 Sat Nov 7 \u00b7 full slate (noon\u201310:30 PM) \u00b7 props + spreads, no Sasser",
+        "file": "cfb/archive/2026-11-07.html"
+      },
       {
         "date": "2026-10-29",
         "slate": "Week 9 \u00b7 Sat Oct 31 slate \u00b7 built Thu (Sasser spreads + alt 7-leg)",

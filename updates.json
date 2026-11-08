@@ -113,9 +113,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-11-07T18:10:00-05:00",
-    "slate": "Sat Nov 7 \u00b7 7 games (Bane OUT: MAX 4 + PARLAY 7 updated, SGP 5 added 6:10p)",
+    "updated": "2026-11-08T14:14:14-05:00",
+    "slate": "Sun Nov 8 \u00b7 7 games",
     "archive": [
+      {
+        "date": "2026-11-08",
+        "slate": "Sun Nov 8 \u00b7 7 games",
+        "file": "nba/archive/2026-11-08.html"
+      },
       {
         "date": "2026-11-07",
         "slate": "Sat Nov 7 \u00b7 7 games (Bane OUT: MAX 4 + PARLAY 7 updated, SGP 5 added 6:10p)",

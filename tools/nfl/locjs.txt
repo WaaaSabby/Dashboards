@@ -1,0 +1,16 @@
+<script>(function(){
+var sel=document.getElementById('loc'),note=document.getElementById('locnote');
+var base='Parlays load the whole ticket; straights, ladders and double-doubles open single bets. Highlighted = the book the line is priced at; a parlay button goes to its best-priced linked book. ';
+function apply(st){
+  var us=st!=='ON';document.body.classList.toggle('us',us);
+  document.querySelectorAll('a[data-tmpl]').forEach(function(a){
+    if(!a.dataset.h)a.dataset.h=a.getAttribute('href');
+    a.setAttribute('href',a.dataset.h.split('{st}').join(st.toLowerCase()));});
+  note.textContent=(us?'Slip buttons open the '+st+' sites (not every book operates in every state). ':'Slip buttons open Ontario sites. ')+base+
+    (us?'Prices on the card are Ontario prices, so check the slip.':'Prices on the card can move, so check the slip.');
+}
+var st='ON';try{st=localStorage.getItem('slipLoc')||'ON';}catch(e){}
+if(!sel.querySelector('option[value="'+st+'"]'))st='ON';
+sel.value=st;apply(st);
+sel.addEventListener('change',function(){try{localStorage.setItem('slipLoc',sel.value);}catch(e){}apply(sel.value);});
+})();</script>

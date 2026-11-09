@@ -113,9 +113,14 @@
     ]
   },
   "nba": {
-    "updated": "2026-11-08T18:59:50-05:00",
-    "slate": "Sun Nov 8 \u00b7 7 games (8/8 picks added 7:00p)",
+    "updated": "2026-11-09T10:15:00-05:00",
+    "slate": "Mon Nov 9 \u00b7 8 games",
     "archive": [
+      {
+        "date": "2026-11-09",
+        "slate": "Mon Nov 9 \u00b7 8 games",
+        "file": "nba/archive/2026-11-09.html"
+      },
       {
         "date": "2026-11-08",
         "slate": "Sun Nov 8 \u00b7 7 games (8/8 picks added 7:00p)",

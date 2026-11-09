@@ -26,9 +26,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-11-08T13:58:08-05:00",
-    "slate": "Sun Nov 8 \u00b7 12 games",
+    "updated": "2026-11-09T13:35:00-05:00",
+    "slate": "Week 9 \u00b7 MNF BUF @ MIN",
     "archive": [
+      {
+        "date": "2026-11-09",
+        "slate": "Week 9 \u00b7 MNF BUF @ MIN",
+        "file": "nfl/archive/2026-11-09.html"
+      },
       {
         "date": "2026-11-08",
         "slate": "Sun Nov 8 \u00b7 12 games",

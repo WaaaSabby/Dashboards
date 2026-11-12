@@ -26,16 +26,9 @@ NOTE = ('<div id="sd-note" style="background:#2a2208;border-bottom:1px solid #5c
 
 
 def add_note(html):
-    """Bet365 disclaimer: dropped Nov 9, 2026 (Bet365 is in the VF feed as B3 now), so this is a no-op."""
-    return html
-    if 'id="sd-note"' in html:
-        return html
-    i = html.find('id="sd-nav"')
-    if i == -1:
-        return html
-    j = html.find("</div>", i) + len("</div>")
-    return html[:j] + NOTE + html[j:]
-
+    """Bet365 is in the feed now (Nov 12, 2026): no disclaimer; strip the old one if a page still has it."""
+    import re
+    return re.sub(r'<div id="sd-note"[^>]*>.*?</div>', '', html, count=1, flags=re.S)
 
 def add_nav(html, href):
     if 'id="sd-nav"' in html:

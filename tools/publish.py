@@ -5,7 +5,7 @@ Usage: python3 tools/publish.py <sport> <dashboard.html> "<slate label>" [YYYY-M
 
 - Copies the dashboard to <sport>/index.html (the permanent link friends bookmark)
 - Keeps a dated copy at <sport>/archive/<date>.html
-- Adds a small "All dashboards" link and the Bet365 disclaimer at the top of both copies
+- Adds a small "All dashboards" link at the top of both copies
 - Updates updates.json (last-updated time, slate label, archive list)
 """
 import json, sys, datetime, pathlib
@@ -26,7 +26,8 @@ NOTE = ('<div id="sd-note" style="background:#2a2208;border-bottom:1px solid #5c
 
 
 def add_note(html):
-    """Bet365 disclaimer under the nav bar, on every dashboard."""
+    """Bet365 disclaimer: dropped Nov 9, 2026 (Bet365 is in the VF feed as B3 now), so this is a no-op."""
+    return html
     if 'id="sd-note"' in html:
         return html
     i = html.find('id="sd-nav"')

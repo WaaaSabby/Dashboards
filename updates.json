@@ -31,9 +31,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-11-19T10:22:18-05:00",
-    "slate": "Week 11 \u00b7 TNF \u00b7 IND @ HOU",
+    "updated": "2026-11-22T09:14:26-05:00",
+    "slate": "Week 11 \u00b7 Sunday slate \u00b7 11 games",
     "archive": [
+      {
+        "date": "2026-11-22",
+        "slate": "Week 11 \u00b7 Sunday slate \u00b7 11 games",
+        "file": "nfl/archive/2026-11-22.html"
+      },
       {
         "date": "2026-11-19",
         "slate": "Week 11 \u00b7 TNF \u00b7 IND @ HOU",

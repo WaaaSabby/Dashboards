@@ -122,9 +122,14 @@
     ]
   },
   "cfb": {
-    "updated": "2026-11-07T11:35:00-05:00",
-    "slate": "Week 10 \u00b7 Sat Nov 7 \u00b7 full slate (noon\u201310:30 PM) \u00b7 props + spreads, no Sasser",
+    "updated": "2026-11-27T10:37:46-05:00",
+    "slate": "Rivalry Weekend \u00b7 Fri Nov 27 + Sat Nov 28 \u00b7 66 games \u00b7 props + Sasser spreads",
     "archive": [
+      {
+        "date": "2026-11-27",
+        "slate": "Rivalry Weekend \u00b7 Fri Nov 27 + Sat Nov 28 \u00b7 66 games \u00b7 props + Sasser spreads",
+        "file": "cfb/archive/2026-11-27.html"
+      },
       {
         "date": "2026-11-07",
         "slate": "Week 10 \u00b7 Sat Nov 7 \u00b7 full slate (noon\u201310:30 PM) \u00b7 props + spreads, no Sasser",

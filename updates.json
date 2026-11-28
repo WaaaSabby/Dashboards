@@ -36,9 +36,14 @@
     ]
   },
   "nfl": {
-    "updated": "2026-11-27T09:55:04-05:00",
-    "slate": "Week 12 \u00b7 Thanksgiving \u00b7 3 games",
+    "updated": "2026-11-28T09:55:06-05:00",
+    "slate": "Week 12 \u00b7 Black Friday \u00b7 DEN @ PIT",
     "archive": [
+      {
+        "date": "2026-11-27",
+        "slate": "Week 12 \u00b7 Black Friday \u00b7 DEN @ PIT",
+        "file": "nfl/archive/2026-11-27.html"
+      },
       {
         "date": "2026-11-26",
         "slate": "Week 12 \u00b7 Thanksgiving \u00b7 3 games",
